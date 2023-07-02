@@ -12,6 +12,8 @@ pub use map::*;
 mod player;
 use player::*;
 mod rect;
+mod visibility_system;
+use visibility_system::VisibilitySystem;
 
 
 pub struct State {
@@ -38,6 +40,8 @@ impl GameState for State {
 
 impl State {
     fn run_systems(&mut self) {
+        let mut vis = VisibilitySystem{};
+        vis.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -69,6 +73,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let(player_x, player_y) = map.rooms[0].center();
@@ -83,6 +88,7 @@ fn main() -> rltk::BError {
             bg: RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2)
         })
         .with(Player {})
+        .with(Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true })
         .build();
 
     rltk::main_loop(context, gs)

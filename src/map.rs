@@ -1,4 +1,4 @@
-use rltk::{RGB, Rltk, RandomNumberGenerator};
+use rltk::{Algorithm2D, BaseMap, Point, RGB, Rltk, RandomNumberGenerator};
 use std::cmp::{max, min};
 use specs::prelude::*;
 
@@ -15,7 +15,9 @@ pub struct Map {
     pub tiles: Vec<TileType>,
     pub rooms: Vec<Rect>,
     pub width: i32,
-    pub height: i32
+    pub height: i32,
+    pub revealed_tiles: Vec<bool>,
+    pub visible_tiles: Vec<bool>
 }
 
 impl Map {
@@ -55,7 +57,9 @@ impl Map {
             tiles: vec![TileType::Wall; 80*50],
             rooms: Vec::new(),
             width: 80,
-            height: 50
+            height: 50,
+            revealed_tiles: vec![false; 80*50],
+            visible_tiles: vec![false; 80*50]
         };
 
         const MAX_ROOMS: i32 = 30;
@@ -109,25 +113,17 @@ pub fn is_inbounds(map: &Map, x: i32, y: i32) -> bool {
 
 fn is_revealed_and_wall(map: &Map, x: i32, y: i32) -> bool {
     let idx = map.xy_idx(x, y);
-    map.tiles[idx] == TileType::Wall
+    map.tiles[idx] == TileType::Wall && map.revealed_tiles[idx]
 }
 
 fn wall_glyph(map: &Map, x: i32, y: i32) -> rltk::FontCharType {
     if x < 1 || x > map.width - 2 || y < 1 || y > map.height - 2 { return 35; }
     let mut mask: u8 = 0;
 
-    if is_revealed_and_wall(map, x, y - 1) {
-            mask += 1;
-        }
-    if is_revealed_and_wall(map, x, y + 1) {
-            mask += 2;
-        }
-    if is_revealed_and_wall(map, x - 1, y) {
-          mask += 4;}
-
-    if is_revealed_and_wall(map, x + 1, y) {
-            mask += 8;
-    }
+    if is_revealed_and_wall(map, x, y - 1) { mask += 1; }
+    if is_revealed_and_wall(map, x, y + 1) { mask += 2; }
+    if is_revealed_and_wall(map, x - 1, y) { mask += 4; }
+    if is_revealed_and_wall(map, x + 1, y) { mask += 8; }
     
     match mask {
         0 => { 9 } // ○ pillar
@@ -151,28 +147,44 @@ fn wall_glyph(map: &Map, x: i32, y: i32) -> rltk::FontCharType {
     }
 }
 
+impl Algorithm2D for Map {
+    fn dimensions(&self) -> Point {
+        Point::new(self.width, self.height)
+    }
+}
+
+impl BaseMap for Map {
+    fn is_opaque(&self, idx: usize) -> bool {
+        self.tiles[idx as usize] == TileType::Wall        
+    }
+}
+
 pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
+
     let map = ecs.fetch::<Map>();
+
     let mut y = 0;
     let mut x = 0;
 
-    for tile in map.tiles.iter() {
-        let glyph;
-        let fg: (f32, f32, f32);
+    for (idx, tile) in map.tiles.iter().enumerate() {
         // Render a tile depending upon the tile type
-        match tile {
-            TileType::Floor => {
-                glyph = rltk::to_cp437(FLOOR_GLYPH);
-                fg = FLOOR_COLOR;
+        if map.revealed_tiles[idx] {
+            let glyph;
+            let mut fg: (f32, f32, f32);
+            // Render a tile depending upon the tile type
+            match tile {
+                TileType::Floor => {
+                    glyph = rltk::to_cp437(FLOOR_GLYPH);
+                    fg = FLOOR_COLOR;
+                }
+                TileType::Wall => {
+                    glyph = wall_glyph(&*map, x, y);
+                    fg = WALL_COLOR;
+                }
             }
-            TileType::Wall => {
-                glyph = wall_glyph(&*map, x, y);
-                fg = WALL_COLOR;
-            }
+            if !map.visible_tiles[idx] { fg = OUT_OF_VIEW;}
+            ctx.set(x, y, RGB::from_f32(fg.0,fg.1,fg.2), RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.0, DEFAULT_BG.0), glyph);
         }
-
-        ctx.set(x, y, RGB::from_f32(fg.0,fg.1,fg.2), RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.0, DEFAULT_BG.0), glyph);
-
         // Move the coordinates
         x += 1;
         if x > 79 {
