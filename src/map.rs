@@ -6,9 +6,9 @@ use super::colors::*;
 use super::glyph_index::FLOOR_GLYPH;
 use super::rect::Rect;
 
-const MAPWIDTH: usize = 80;
-const MAPHEIGHT: usize = 40;
-const MAPCOUNT: usize = MAPHEIGHT * MAPWIDTH;
+pub const MAPWIDTH: usize = 80;
+pub const MAPHEIGHT: usize = 40;
+pub const MAPCOUNT: usize = MAPHEIGHT * MAPWIDTH;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum TileType {
@@ -161,8 +161,8 @@ fn wall_glyph(map: &Map, x: i32, y: i32) -> rltk::FontCharType {
         10 => { 201 } // ╔ wall to south and east
         11 => { 204 } // ╠ wall to north, south and east
         12 => { 205 } // ═ wall to east and west 
-        13 => { 202 } // ╩ wall to east, west and south
-        14 => { 203 } // ╦ wall to east west and north
+        13 => { 202 } // ╩ wall to east, west and north
+        14 => { 203 } // ╦ wall to east west and south
         15 => { 206 } // ╬ wall to north, east, south and west
         _ => { 35 } // # missed one?
 
@@ -219,8 +219,6 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
     let mut y = 0;
     let mut x = 0;
 
-    let mut map_rng = RandomNumberGenerator::new();    
-
     for (idx, tile) in map.tiles.iter().enumerate() {
         // Render a tile depending upon the tile type
         if map.revealed_tiles[idx] {
@@ -240,17 +238,12 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
             if !map.visible_tiles[idx] { fg = OUT_OF_VIEW;}
             ctx.set(x, y, RGB::from_f32(fg.0,fg.1,fg.2), RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2), glyph);
         } else {
-            let glyph;
-            if map_rng.range(0,2) == 1 {
-                glyph = rltk::to_cp437('≈');                
-            } else {
-                glyph = rltk::to_cp437(' ')
-            }
-            ctx.set(x, y, RGB::from_f32(AETHER_FG.0, AETHER_FG.1, AETHER_FG.2), RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2), glyph);
+            let aether_glyph = rltk::to_cp437('≈');          
+            ctx.set(x, y, RGB::from_f32(AETHER_FG.0, AETHER_FG.1, AETHER_FG.2), RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2), aether_glyph);
         }
         // Move the coordinates
         x += 1;
-        if x > 79 {
+        if x > MAPWIDTH as i32 - 1 {
             x = 0;
             y += 1;
         }
