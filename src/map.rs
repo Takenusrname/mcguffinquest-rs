@@ -237,10 +237,8 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
             }
             if !map.visible_tiles[idx] { fg = OUT_OF_VIEW;}
             ctx.set(x, y, RGB::from_f32(fg.0,fg.1,fg.2), RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2), glyph);
-        } else {
-            let aether_glyph = rltk::to_cp437('≈');          
-            ctx.set(x, y, RGB::from_f32(AETHER_FG.0, AETHER_FG.1, AETHER_FG.2), RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2), aether_glyph);
-        }
+        } 
+        
         // Move the coordinates
         x += 1;
         if x > MAPWIDTH as i32 - 1 {

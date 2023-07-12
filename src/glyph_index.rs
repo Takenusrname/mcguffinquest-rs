@@ -9,6 +9,7 @@ pub const ORC_GLYPH: char = 'o';
 pub const SCROLL_GLYPH: char = '‼';
 pub const POTION_GLYPH: char = '¡';
 
-// Walls and floors
+// dungeon
 pub const WALL_GLYPH: char = '#';
 pub const FLOOR_GLYPH: char = '.';
+pub const AETHER_GLYPH: char = '≈';

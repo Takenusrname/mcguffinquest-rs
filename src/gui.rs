@@ -4,7 +4,7 @@ use specs::prelude::*;
 use rltk::Rect;
 
 use super::colors::*;
-use super::{ CombatStats, game_log::GameLog, InBackpack, Map, Name, Player, Position, State };
+use super::{ CombatStats, game_log::GameLog, InBackpack, Map, Name, Player, Position, State, Viewshed };
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     let fg: (f32, f32, f32) = DEFAULT_FG;
@@ -231,4 +231,52 @@ pub fn drop_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
             }
         }
     }
+}
+
+pub fn ranged_target(gs: &mut State, ctx: &mut Rltk, range: i32) -> (ItemMenuResult, Option<Point>) {
+    let player_entity = gs.ecs.fetch::<Entity>();
+    let player_pos = gs.ecs.fetch::<Point>();
+    let viewsheds = gs.ecs.read_storage::<Viewshed>();
+
+    // Targeting message
+    let fg: RGB = RGB::from_f32(CTRL_FG.0, CTRL_FG.1, CTRL_FG.2);
+    let bg: RGB = RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2);
+    let msg = "Select Target";
+    ctx.print_color(5, 0, fg, bg, msg);
+
+    // Highlight available target cells
+    let target_bg: RGB = RGB::from_f32(TARGET_BG.0, TARGET_BG.1, TARGET_BG.2);
+    let mut available_cells = Vec::new();
+    let visible = viewsheds.get(*player_entity);
+    if let Some(visible) = visible {
+        // We have a viewshed
+        for idx in visible.visible_tiles.iter() {
+            let distance = rltk::DistanceAlg::Pythagoras.distance2d(*player_pos, *idx);
+            if distance <= range as f32 {
+                ctx.set_bg(idx.x, idx.y, target_bg);
+                available_cells.push(idx);
+            }
+        }
+    } else {
+        return (ItemMenuResult::Cancel, None);
+    }
+
+    // Draw mouse cursor
+    let valid_bg: RGB = RGB::from_f32(MOUSE_BG.0, MOUSE_BG.1, MOUSE_BG.2);
+    let invalid_bg: RGB = RGB::from_f32(ERROR_BG.0, ERROR_BG.1, ERROR_BG.2);
+    let mouse_pos = ctx.mouse_pos();
+    let mut valid_target = false;
+    for idx in available_cells.iter() { if idx.x == mouse_pos.0 && idx.y == mouse_pos.1 { valid_target = true; } }
+    if valid_target {
+        ctx.set_bg(mouse_pos.0, mouse_pos.1, valid_bg);
+        if ctx.left_click {
+            return (ItemMenuResult::Selected, Some(Point::new(mouse_pos.0, mouse_pos.1)));
+        }
+    } else {
+        ctx.set_bg(mouse_pos.0, mouse_pos.1, invalid_bg);
+        if ctx.left_click {
+            return (ItemMenuResult::Cancel, None);
+        }
+    }
+    (ItemMenuResult::NoResponse, None)
 }
