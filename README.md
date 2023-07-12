@@ -8,8 +8,8 @@ A yearly event where the community follows the [Python](https://rogueliketutoria
 For more information on the event check out the official [thread](https://np.reddit.com/r/roguelikedev/comments/14kz7al/roguelikedev_does_the_complete_roguelike_tutorial/).
 
 ### Weekly Threads
-- Week 1
-- Week 2
+- [Week 1](https://np.reddit.com/r/roguelikedev/comments/14q58js/roguelikedev_does_the_complete_roguelike_tutorial/)
+- [Week 2](https://np.reddit.com/r/roguelikedev/comments/14wuzqa/roguelikedev_does_the_complete_roguelike_tutorial/)
 - Week 3
 - Week 4
 - Week 5
