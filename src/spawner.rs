@@ -126,7 +126,7 @@ fn magic_missile_scrolls(ecs: &mut World, x: i32, y: i32) {
             bg,
             render_order: 2
         })
-        .with(Name{ name: "Magic Missle Scroll".to_string() })
+        .with(Name{ name: "Magic Missile Scroll".to_string() })
         .with(Item{})
         .with(Consumable{})
         .with(Ranged{ range: 6 })
