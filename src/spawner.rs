@@ -10,16 +10,16 @@ const MAX_ITEMS: i32 = 2;
 
 /// Spawn the player and returns his/her entity object.
 pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
-    let fore_col: RGB = RGB::from_f32(PLAYER_FG.0,PLAYER_FG.1,PLAYER_FG.2);
-    let back_col: RGB = RGB::from_f32(DEFAULT_BG.0,DEFAULT_BG.1,DEFAULT_BG.2);
-    let player_glyph: u16 = rltk::to_cp437(PLAYER_GLYPH);
+    let fg: RGB = return_rgb(PLAYER_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
+    let glyph: u16 = rltk::to_cp437(PLAYER_GLYPH);
     ecs
         .create_entity()
         .with(Position { x: player_x, y: player_y})
         .with(Renderable {
-            glyph: player_glyph,
-            fg: fore_col,
-            bg: back_col,
+            glyph,
+            fg,
+            bg,
             render_order: 0
         })
         .with(Player{})
@@ -52,7 +52,7 @@ pub fn random_monster(ecs: &mut World, x: i32, y: i32) {
 
 fn orc(ecs: &mut World, x: i32, y: i32) {
     let glyph: u16 = rltk::to_cp437(ORC_GLYPH);
-    let fg: RGB = RGB::from_f32(ORC_FG.0, ORC_FG.1, ORC_FG.2);
+    let fg: RGB = return_rgb(ORC_FG);
     let name: &str = "Orc";
 
     monster(ecs, x, y, glyph, fg, name);
@@ -60,7 +60,7 @@ fn orc(ecs: &mut World, x: i32, y: i32) {
 
 fn goblin(ecs: &mut World, x: i32, y: i32) {
     let glyph: u16 = rltk::to_cp437(GOBLIN_GLYPH);
-    let fg: RGB = RGB::from_f32(GOBLIN_FG.0, GOBLIN_FG.1, GOBLIN_FG.2);
+    let fg: RGB = return_rgb(GOBLIN_FG);
     let name: &str = "Goblin";
 
     monster(ecs, x, y, glyph, fg, name);
@@ -72,7 +72,7 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
         .with(Renderable {
             glyph,
             fg,
-            bg: RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2),
+            bg: return_rgb(DEFAULT_BG),
             render_order: 1
         })
         .with(Viewshed {
@@ -94,8 +94,8 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
 
 fn health_potion(ecs: &mut World, x: i32, y: i32) {
     let glyph: u16 = rltk::to_cp437(POTION_GLYPH);
-    let fg: RGB = RGB::from_f32(HEALTH_POT_FG.0, HEALTH_POT_FG.1, HEALTH_POT_FG.2);
-    let bg: RGB = RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2);
+    let fg: RGB = return_rgb(HEALTH_POT_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
     let name: &str = "Health Potion";
     
     ecs.create_entity()
@@ -115,8 +115,8 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
 
 fn magic_missile_scrolls(ecs: &mut World, x: i32, y: i32) {
     let glyph: u16 = rltk::to_cp437(SCROLL_GLYPH);
-    let fg: RGB = RGB::from_f32(MMS_FG.0, MMS_FG.1, MMS_FG.2);
-    let bg: RGB = RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2);
+    let fg: RGB = return_rgb(MMS_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
     
     ecs.create_entity()
         .with(Position{ x, y})
@@ -137,8 +137,8 @@ fn magic_missile_scrolls(ecs: &mut World, x: i32, y: i32) {
 fn fireball_scroll(ecs: &mut World, x: i32, y: i32) {
 
     let glyph: u16 = rltk::to_cp437(SCROLL_GLYPH);
-    let fg: RGB = RGB::from_f32(FIREBALL_FG.0, FIREBALL_FG.1, FIREBALL_FG.2);
-    let bg: RGB = RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2);
+    let fg: RGB = return_rgb(FIREBALL_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
 
     ecs.create_entity()
         .with(Position{ x, y })
@@ -148,7 +148,7 @@ fn fireball_scroll(ecs: &mut World, x: i32, y: i32) {
             bg,
             render_order: 2
         })
-        .with(Name{ name: "FireBall Scroll".to_string()})
+        .with(Name{ name: "Fireball Scroll".to_string()})
         .with(Item{})
         .with(Consumable{})
         .with(Ranged{range: 6})
@@ -160,8 +160,8 @@ fn fireball_scroll(ecs: &mut World, x: i32, y: i32) {
 fn confusion_scroll(ecs: &mut World, x: i32, y: i32) {
 
     let glyph: u16 = rltk::to_cp437(SCROLL_GLYPH);
-    let fg: RGB = RGB::from_f32(CONFUSION_FG.0, CONFUSION_FG.1, CONFUSION_FG.2);
-    let bg: RGB = RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2);
+    let fg: RGB = return_rgb(CONFUSION_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
 
     ecs.create_entity()
         .with(Position{ x, y })

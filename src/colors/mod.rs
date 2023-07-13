@@ -1,5 +1,12 @@
 mod db16;
 use db16::*;
+use rltk::RGB;
+
+pub fn return_rgb(color_values: (f32,f32,f32)) -> RGB {
+    let rgb = RGB::from_f32(color_values.0, color_values.1, color_values.2);
+    return rgb
+}
+
 // Defaults
 #[allow(unused)]
 pub const DEFAULT_FG: (f32, f32, f32) = DB16_LIGHT8_F32;
@@ -21,7 +28,7 @@ pub const GOBLIN_FG: (f32, f32, f32) = DB16_LIGHT4_F32;
 pub const HEALTH_POT_FG: (f32, f32, f32) = DB16_DARK7_F32;
 pub const CONFUSION_FG: (f32, f32, f32) = DB16_LIGHT7_F32;
 pub const MMS_FG: (f32, f32, f32) = DB16_LIGHT6_F32;
-pub const FIREBALL_FG:(f32, f32,f32) = DB16_LIGHT2_F32;
+pub const FIREBALL_FG: (f32, f32, f32) = DB16_LIGHT2_F32;
 
 // Dungeon
 pub const WALL_COLOR: (f32, f32, f32) = DB16_LIGHT5_F32;

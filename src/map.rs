@@ -223,20 +223,20 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
         // Render a tile depending upon the tile type
         if map.revealed_tiles[idx] {
             let glyph;
-            let mut fg: (f32, f32, f32);
+            let mut fg: RGB;
             // Render a tile depending upon the tile type
             match tile {
                 TileType::Floor => {
                     glyph = rltk::to_cp437(FLOOR_GLYPH);
-                    fg = FLOOR_COLOR;
+                    fg = return_rgb(FLOOR_COLOR);
                 }
                 TileType::Wall => {
                     glyph = wall_glyph(&*map, x, y);
-                    fg = WALL_COLOR;
+                    fg = return_rgb(WALL_COLOR);
                 }
             }
-            if !map.visible_tiles[idx] { fg = OUT_OF_VIEW;}
-            ctx.set(x, y, RGB::from_f32(fg.0,fg.1,fg.2), RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2), glyph);
+            if !map.visible_tiles[idx] { fg = return_rgb(OUT_OF_VIEW);}
+            ctx.set(x, y, fg, return_rgb(DEFAULT_BG), glyph);
         } 
         
         // Move the coordinates

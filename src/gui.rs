@@ -7,31 +7,31 @@ use super::colors::*;
 use super::{ CombatStats, game_log::GameLog, InBackpack, Map, Name, Player, Position, State, Viewshed };
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
-    let fg: (f32, f32, f32) = DEFAULT_FG;
-    let bg: (f32, f32, f32) = DEFAULT_BG;
+    let fg: RGB = return_rgb(DEFAULT_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
 
-    let m_bg: (f32, f32, f32) = MOUSE_BG;
+    let m_bg: RGB = return_rgb(MOUSE_BG);
 
     let info_title = format!(" Player Info. ");
     let msg_title = format!(" Message Log ");
 
     let bg_rect = Rect::with_size(0, 40, 79, 49);
 
-    ctx.fill_region(bg_rect, rltk::to_cp437(' '), RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2));
+    ctx.fill_region(bg_rect, rltk::to_cp437(' '), fg, bg);
 
-    ctx.draw_hollow_box(0, 40, 23, 9, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2));
-    ctx.draw_hollow_box(23, 40, 79-23, 9, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2));
+    ctx.draw_hollow_box(0, 40, 23, 9, fg, bg);
+    ctx.draw_hollow_box(23, 40, 79-23, 9, fg, bg);
 
-    ctx.set(23, 40, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2), rltk::to_cp437('┬'));
-    ctx.set(23, 49, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2), rltk::to_cp437('┴'));
+    ctx.set(23, 40, fg, bg, rltk::to_cp437('┬'));
+    ctx.set(23, 49, fg, bg, rltk::to_cp437('┴'));
 
-    ctx.set(1, 40, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2), rltk::to_cp437('┤'));
-    ctx.print_color(2, 40, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2), info_title);
-    ctx.set(16, 40, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2), rltk::to_cp437('├'));
+    ctx.set(1, 40, fg, bg, rltk::to_cp437('┤'));
+    ctx.print_color(2, 40, fg, bg, info_title);
+    ctx.set(16, 40, fg, bg, rltk::to_cp437('├'));
 
-    ctx.set(24, 40, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2), rltk::to_cp437('┤'));
-    ctx.print_color(25, 40, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2), msg_title);
-    ctx.set(38, 40, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2), rltk::to_cp437('├'));
+    ctx.set(24, 40, fg, bg, rltk::to_cp437('┤'));
+    ctx.print_color(25, 40, fg, bg, msg_title);
+    ctx.set(38, 40, fg, bg, rltk::to_cp437('├'));
     
     let combat_stats = ecs.read_storage::<CombatStats>();
     let players = ecs.read_storage::<Player>();
@@ -39,25 +39,25 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     for (_player, stats) in (&players, &combat_stats).join() {
         let health = format!("HP: {} / {} ", stats.hp, stats.max_hp);        
         
-        ctx.print_color(2, 42, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2), &health);
+        ctx.print_color(2, 42, fg, bg, &health);
 
-        let bar_fg: (f32, f32, f32) = HEALTH_BAR_FG;
-        let bar_bg: (f32, f32, f32) = DEFAULT_BG;
+        let bar_fg: RGB = return_rgb(HEALTH_BAR_FG);
+        let bar_bg: RGB = return_rgb(DEFAULT_BG);
 
-        ctx.draw_bar_horizontal(2, 43, 20, stats.hp, stats.max_hp, RGB::from_f32(bar_fg.0, bar_fg.1, bar_fg.2), RGB::from_f32(bar_bg.0, bar_bg.1, bar_bg.2))
+        ctx.draw_bar_horizontal(2, 43, 20, stats.hp, stats.max_hp, bar_fg, bar_bg)
     }
 
     let log = ecs.fetch::<GameLog>();
 
     let mut y = 41;
     for s in log.entries.iter().rev() {
-        if y < 49 { ctx.print_color(25, y, RGB::from_f32(fg.0, fg.1, fg.2), RGB::from_f32(bg.0, bg.1, bg.2), s);}
+        if y < 49 { ctx.print_color(25, y, fg, bg, s);}
         y += 1;
     }
 
     // Draw Mouse Cursor
     let mouse_pos = ctx.mouse_pos();
-    ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::from_f32(m_bg.0, m_bg.1, m_bg.2));
+    ctx.set_bg(mouse_pos.0, mouse_pos.1, m_bg);
     draw_tooltips(ecs, ctx);
 }
 
@@ -76,6 +76,9 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
         }
     }
 
+    let fg: RGB = return_rgb(DEFAULT_FG);
+    let bg: RGB = return_rgb(TOOLTIP_BG);
+
     if !tooltip.is_empty() {
         let mut width: i32 = 0;
         for s in tooltip.iter() {
@@ -88,27 +91,27 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
             let left_x = mouse_pos.0 - width;
             let mut y = mouse_pos.1;
             for s in tooltip.iter() {
-                ctx.print_color(left_x, y, RGB::from_f32(DEFAULT_FG.0, DEFAULT_FG.1, DEFAULT_FG.2), RGB::from_f32(TOOLTIP_BG.0, TOOLTIP_BG.1, TOOLTIP_BG.2), s);
+                ctx.print_color(left_x, y, fg, bg, s);
                 let padding = (width - s.len() as i32) - 1;
                 for i in 0..padding {
-                    ctx.print_color(arrow_pos.x - i, y, RGB::from_f32(DEFAULT_FG.0, DEFAULT_FG.1, DEFAULT_FG.2), RGB::from_f32(TOOLTIP_BG.0, TOOLTIP_BG.1, TOOLTIP_BG.2), &" ".to_string());
+                    ctx.print_color(arrow_pos.x - i, y, fg, bg, &" ".to_string());
                 }
                 y += 1;
             }
-            ctx.print_color(arrow_pos.x, arrow_pos.y, RGB::from_f32(DEFAULT_FG.0, DEFAULT_FG.1, DEFAULT_FG.2), RGB::from_f32(TOOLTIP_BG.0, TOOLTIP_BG.1, TOOLTIP_BG.2), &"->".to_string());
+            ctx.print_color(arrow_pos.x, arrow_pos.y, fg, bg, &"->".to_string());
         } else {
             let arrow_pos = Point::new(mouse_pos.0 + 1, mouse_pos.1);
             let left_x = mouse_pos.0 + 3;
             let mut y  = mouse_pos.1;
             for s in tooltip.iter() {
-                ctx.print_color(left_x + 1, y, RGB::from_f32(DEFAULT_FG.0, DEFAULT_FG.1, DEFAULT_FG.2), RGB::from_f32(TOOLTIP_BG.0, TOOLTIP_BG.1, TOOLTIP_BG.2), s);
+                ctx.print_color(left_x + 1, y, fg, bg, s);
                 let padding = (width - s.len() as i32) - 1;
                 for i in 0..padding {
-                    ctx.print_color(arrow_pos.x + 1 + i, y, RGB::from_f32(DEFAULT_FG.0, DEFAULT_FG.1, DEFAULT_FG.2), RGB::from_f32(TOOLTIP_BG.0, TOOLTIP_BG.1, TOOLTIP_BG.2), &" ".to_string());
+                    ctx.print_color(arrow_pos.x + 1 + i, y, fg, bg, &" ".to_string());
                 }
                 y += 1;
             }
-            ctx.print_color(arrow_pos.x, arrow_pos.y, RGB::from_f32(DEFAULT_FG.0, DEFAULT_FG.1, DEFAULT_FG.2), RGB::from_f32(TOOLTIP_BG.0, TOOLTIP_BG.1, TOOLTIP_BG.2), &"<-".to_string());
+            ctx.print_color(arrow_pos.x, arrow_pos.y, fg, bg, &"<-".to_string());
         }
     }
 }
@@ -129,9 +132,9 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
 
     let bg_rect = Rect::with_size(15, y - 2, 31, (count + 3) as i32);
 
-    let fg: RGB = RGB::from_f32(MENU_FG.0, MENU_FG.1, MENU_FG.2);
-    let bg: RGB = RGB::from_f32(INV_BG.0, INV_BG.1, INV_BG.2);
-    let ctrl_fg: RGB = RGB::from_f32(CTRL_FG.0, CTRL_FG.1, CTRL_FG.2);
+    let fg: RGB = return_rgb(MENU_FG);
+    let bg: RGB = return_rgb(INV_BG);
+    let ctrl_fg: RGB = return_rgb(CTRL_FG);
 
     let start_char = rltk::to_cp437('┤');
     let end_char = rltk::to_cp437('├');
@@ -188,9 +191,9 @@ pub fn drop_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
 
     let bg_rect = Rect::with_size(15, y - 2, 31, (count + 3) as i32);
 
-    let fg: RGB = RGB::from_f32(MENU_FG.0, MENU_FG.1, MENU_FG.2);
-    let bg: RGB = RGB::from_f32(DROP_BG.0, DROP_BG.1, DROP_BG.2);
-    let ctrl_fg: RGB = RGB::from_f32(CTRL_FG.0, CTRL_FG.1, CTRL_FG.2);
+    let fg: RGB = return_rgb(MENU_FG);
+    let bg: RGB = return_rgb(DROP_BG);
+    let ctrl_fg: RGB = return_rgb(CTRL_FG);
 
     let start_char = rltk::to_cp437('┤');
     let end_char = rltk::to_cp437('├');
@@ -239,13 +242,13 @@ pub fn ranged_target(gs: &mut State, ctx: &mut Rltk, range: i32) -> (ItemMenuRes
     let viewsheds = gs.ecs.read_storage::<Viewshed>();
 
     // Targeting message
-    let fg: RGB = RGB::from_f32(CTRL_FG.0, CTRL_FG.1, CTRL_FG.2);
-    let bg: RGB = RGB::from_f32(DEFAULT_BG.0, DEFAULT_BG.1, DEFAULT_BG.2);
+    let fg: RGB = return_rgb(CTRL_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
     let msg = "Select Target";
     ctx.print_color(5, 0, fg, bg, msg);
 
     // Highlight available target cells
-    let target_bg: RGB = RGB::from_f32(TARGET_BG.0, TARGET_BG.1, TARGET_BG.2);
+    let target_bg: RGB = return_rgb(TARGET_BG);
     let mut available_cells = Vec::new();
     let visible = viewsheds.get(*player_entity);
     if let Some(visible) = visible {
@@ -262,8 +265,8 @@ pub fn ranged_target(gs: &mut State, ctx: &mut Rltk, range: i32) -> (ItemMenuRes
     }
 
     // Draw mouse cursor
-    let valid_bg: RGB = RGB::from_f32(MOUSE_BG.0, MOUSE_BG.1, MOUSE_BG.2);
-    let invalid_bg: RGB = RGB::from_f32(ERROR_BG.0, ERROR_BG.1, ERROR_BG.2);
+    let valid_bg: RGB = return_rgb(MOUSE_BG);
+    let invalid_bg: RGB = return_rgb(ERROR_BG);
     let mouse_pos = ctx.mouse_pos();
     let mut valid_target = false;
     for idx in available_cells.iter() { if idx.x == mouse_pos.0 && idx.y == mouse_pos.1 { valid_target = true; } }
