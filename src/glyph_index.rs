@@ -12,4 +12,5 @@ pub const POTION_GLYPH: char = '¡';
 // dungeon
 pub const WALL_GLYPH: char = '#';
 pub const FLOOR_GLYPH: char = '.';
+pub const STAIRS_GLYPH: char = '>';
 pub const AETHER_GLYPH: char = '≈';

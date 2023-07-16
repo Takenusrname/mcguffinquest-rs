@@ -33,6 +33,7 @@ pub const FIREBALL_FG: (f32, f32, f32) = DB16_LIGHT2_F32;
 // Dungeon
 pub const WALL_COLOR: (f32, f32, f32) = DB16_LIGHT5_F32;
 pub const FLOOR_COLOR: (f32, f32, f32) = DB16_DARK5_F32;
+pub const STAIRS_FG: (f32, f32, f32) = DB16_LIGHT2_F32;
 pub const OUT_OF_VIEW: (f32, f32, f32) = DB16_DARK2_F32;
 pub const AETHER_FG: (f32,f32,f32) = DB16_DARK4_F32;
 

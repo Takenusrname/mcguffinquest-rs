@@ -19,19 +19,19 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
 
     ctx.fill_region(bg_rect, rltk::to_cp437(' '), fg, bg);
 
-    ctx.draw_hollow_box(0, 40, 23, 9, fg, bg);
-    ctx.draw_hollow_box(23, 40, 79-23, 9, fg, bg);
+    ctx.draw_hollow_box(0, 40, 18, 9, fg, bg);
+    ctx.draw_hollow_box(18, 40, 79-18, 9, fg, bg);
 
-    ctx.set(23, 40, fg, bg, rltk::to_cp437('┬'));
-    ctx.set(23, 49, fg, bg, rltk::to_cp437('┴'));
+    ctx.set(18, 40, fg, bg, rltk::to_cp437('┬'));
+    ctx.set(18, 49, fg, bg, rltk::to_cp437('┴'));
 
     ctx.set(1, 40, fg, bg, rltk::to_cp437('┤'));
     ctx.print_color(2, 40, fg, bg, info_title);
     ctx.set(16, 40, fg, bg, rltk::to_cp437('├'));
 
-    ctx.set(24, 40, fg, bg, rltk::to_cp437('┤'));
-    ctx.print_color(25, 40, fg, bg, msg_title);
-    ctx.set(38, 40, fg, bg, rltk::to_cp437('├'));
+    ctx.set(19, 40, fg, bg, rltk::to_cp437('┤'));
+    ctx.print_color(20, 40, fg, bg, msg_title);
+    ctx.set(33, 40, fg, bg, rltk::to_cp437('├'));
     
     let combat_stats = ecs.read_storage::<CombatStats>();
     let players = ecs.read_storage::<Player>();
@@ -44,14 +44,18 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         let bar_fg: RGB = return_rgb(HEALTH_BAR_FG);
         let bar_bg: RGB = return_rgb(DEFAULT_BG);
 
-        ctx.draw_bar_horizontal(2, 43, 20, stats.hp, stats.max_hp, bar_fg, bar_bg)
+        ctx.draw_bar_horizontal(2, 43, 15, stats.hp, stats.max_hp, bar_fg, bar_bg)
     }
+
+    let map = ecs.fetch::<Map>();
+    let depth = format!(" Depth: {} ", map.depth);
+    ctx.print_color(1, 49, return_rgb(DEFAULT_BG), return_rgb(DEFAULT_FG), &depth);
 
     let log = ecs.fetch::<GameLog>();
 
     let mut y = 41;
     for s in log.entries.iter().rev() {
-        if y < 49 { ctx.print_color(25, y, fg, bg, s);}
+        if y < 49 { ctx.print_color(20, y, fg, bg, s);}
         y += 1;
     }
 
@@ -311,25 +315,25 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
         y += 2;
         if selection == MainMenuSelection::NewGame {
             ctx.set(9, y, select_fg, bg, sel_glyph);
-            ctx.print_color(11, y, select_fg, bg, "New Game");
+            ctx.print_color(10, y, select_fg, bg, "New Game");
         } else {
-            ctx.print_color(11, y, notselet_fg, bg, "New Game");
+            ctx.print_color(10, y, notselet_fg, bg, "New Game");
         }
         y += 2;
         if save_exists {
             if selection == MainMenuSelection::LoadGame {
                 ctx.set(9, y, select_fg, bg, sel_glyph);
-                ctx.print_color(11, y, select_fg, bg, "Load Game");
+                ctx.print_color(10, y, select_fg, bg, "Load Game");
             } else {
-                ctx.print_color(11, y, notselet_fg, bg, "Load Game");
+                ctx.print_color(10, y, notselet_fg, bg, "Load Game");
             }
             y += 2;
         }
         if selection == MainMenuSelection::Quit {
             ctx.set(9, y, select_fg, bg, sel_glyph);
-            ctx.print_color(11, y, select_fg, bg, "Quit");
+            ctx.print_color(10, y, select_fg, bg, "Quit");
         } else {
-            ctx.print_color(11, y, notselet_fg, bg, "Quit");
+            ctx.print_color(10, y, notselet_fg, bg, "Quit");
         }
 
         match ctx.key {
