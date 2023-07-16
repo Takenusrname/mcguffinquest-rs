@@ -42,6 +42,9 @@ pub const MOUSE_BG: (f32, f32, f32) = DB16_LIGHT5_F32;
 pub const TOOLTIP_BG: (f32, f32, f32) = DB16_DARK8_F32;
 pub const TARGET_BG: (f32, f32, f32) = DB16_LIGHT1_F32;
 pub const ERROR_BG: (f32,f32,f32) = DB16_DARK7_F32;
+pub const TITLE_FG: (f32,f32,f32) = DB16_LIGHT7_F32;
+pub const SELECT_FG: (f32, f32, f32) = DB16_LIGHT6_F32;
+pub const NOTSELECT_FG: (f32, f32, f32) = DB16_LIGHT8_F32;
 
 // UI - Menu
 pub const MENU_FG: (f32, f32, f32) = DB16_LIGHT8_F32;

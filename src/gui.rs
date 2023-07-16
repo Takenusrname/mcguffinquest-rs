@@ -4,7 +4,7 @@ use specs::prelude::*;
 use rltk::Rect;
 
 use super::colors::*;
-use super::{ CombatStats, game_log::GameLog, InBackpack, Map, Name, Player, Position, State, Viewshed };
+use super::{ CombatStats, game_log::GameLog, InBackpack, Map, Name, Player, Position, RunState, State, Viewshed };
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     let fg: RGB = return_rgb(DEFAULT_FG);
@@ -282,4 +282,92 @@ pub fn ranged_target(gs: &mut State, ctx: &mut Rltk, range: i32) -> (ItemMenuRes
         }
     }
     (ItemMenuResult::NoResponse, None)
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum MainMenuSelection { NewGame, LoadGame, Quit }
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum MainMenuResult { NoSelection{ selected: MainMenuSelection}, Selected{ selected: MainMenuSelection} }
+
+pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
+
+    let save_exists = super::saveload_system::does_save_exist();
+    let runstate = gs.ecs.fetch::<RunState>();
+
+    let title_fg: RGB = return_rgb(TITLE_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
+
+    let select_fg: RGB = return_rgb(SELECT_FG);
+    let notselet_fg: RGB = return_rgb(NOTSELECT_FG);
+
+    let sel_glyph = rltk::to_cp437('►');
+
+    let mut y = 20;
+    
+    ctx.print_color(9, y, title_fg, bg, "McGuffin Quest");
+
+    if let RunState::MainMenu { menu_selection: selection } = *runstate {
+        y += 2;
+        if selection == MainMenuSelection::NewGame {
+            ctx.set(9, y, select_fg, bg, sel_glyph);
+            ctx.print_color(11, y, select_fg, bg, "New Game");
+        } else {
+            ctx.print_color(11, y, notselet_fg, bg, "New Game");
+        }
+        y += 2;
+        if save_exists {
+            if selection == MainMenuSelection::LoadGame {
+                ctx.set(9, y, select_fg, bg, sel_glyph);
+                ctx.print_color(11, y, select_fg, bg, "Load Game");
+            } else {
+                ctx.print_color(11, y, notselet_fg, bg, "Load Game");
+            }
+            y += 2;
+        }
+        if selection == MainMenuSelection::Quit {
+            ctx.set(9, y, select_fg, bg, sel_glyph);
+            ctx.print_color(11, y, select_fg, bg, "Quit");
+        } else {
+            ctx.print_color(11, y, notselet_fg, bg, "Quit");
+        }
+
+        match ctx.key {
+            None => return MainMenuResult::NoSelection { selected: selection },
+            Some(key) => {
+                match key {
+                    VirtualKeyCode::Escape => { return MainMenuResult::NoSelection { selected: MainMenuSelection::Quit } }
+                    VirtualKeyCode::Up => {
+                        let mut newselection;
+                        match selection {
+                            MainMenuSelection::NewGame => newselection = MainMenuSelection::Quit,
+                            MainMenuSelection::LoadGame => newselection = MainMenuSelection::NewGame,
+                            MainMenuSelection::Quit => newselection = MainMenuSelection::LoadGame
+                        }
+                        if newselection == MainMenuSelection::LoadGame && !save_exists {
+                            newselection = MainMenuSelection::NewGame;
+                        }
+                        return MainMenuResult::NoSelection { selected: newselection }
+                    }
+                    VirtualKeyCode::Down => {
+                        let mut newselection;
+                        match selection {
+                            MainMenuSelection::NewGame => newselection = MainMenuSelection::LoadGame,
+                            MainMenuSelection::LoadGame => newselection = MainMenuSelection::Quit,
+                            MainMenuSelection::Quit => newselection = MainMenuSelection::NewGame
+                        }
+                        if newselection == MainMenuSelection::LoadGame && !save_exists {
+                            newselection = MainMenuSelection::Quit;
+                        }
+                        return MainMenuResult::NoSelection { selected: newselection }
+                    }
+                    VirtualKeyCode::Return => return MainMenuResult::Selected { selected: selection },
+                    _ => return MainMenuResult::NoSelection { selected: selection }
+                }
+            }
+            
+        }
+    }
+
+    MainMenuResult::NoSelection { selected: MainMenuSelection::NewGame }
 }

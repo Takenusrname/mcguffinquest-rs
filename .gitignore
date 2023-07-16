@@ -1,2 +1,5 @@
 /target
 /images
+/wasm
+wasm_build.cmd
+savegame.json
