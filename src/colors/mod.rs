@@ -30,6 +30,12 @@ pub const CONFUSION_FG: (f32, f32, f32) = DB16_LIGHT7_F32;
 pub const MMS_FG: (f32, f32, f32) = DB16_LIGHT6_F32;
 pub const FIREBALL_FG: (f32, f32, f32) = DB16_LIGHT2_F32;
 
+// Equipment
+pub const DAGGER_FG: (f32, f32, f32) = DB16_LIGHT6_F32;
+pub const SHIELD_FG: (f32, f32, f32) = DB16_LIGHT6_F32;
+pub const TOWER_S_FG: (f32, f32, f32) = DB16_LIGHT7_F32;
+pub const SWORD_FG: (f32, f32, f32) = DB16_LIGHT7_F32;
+
 // Dungeon
 pub const WALL_COLOR: (f32, f32, f32) = DB16_LIGHT5_F32;
 pub const FLOOR_COLOR: (f32, f32, f32) = DB16_DARK5_F32;
@@ -51,6 +57,10 @@ pub const NOTSELECT_FG: (f32, f32, f32) = DB16_LIGHT8_F32;
 pub const MENU_FG: (f32, f32, f32) = DB16_LIGHT8_F32;
 pub const INV_BG: (f32, f32, f32) = DB16_LIGHT6_F32;
 pub const DROP_BG: (f32, f32, f32) = DB16_DARK7_F32;
+pub const REMOVE_BG: (f32, f32, f32) = DB16_LIGHT2_F32;
 pub const HELP_FG: (f32, f32, f32) = DB16_LIGHT3_F32;
 pub const HELP_BG: (f32, f32, f32) = DB16_LIGHT1_F32;
 pub const CTRL_FG: (f32, f32, f32) = DB16_LIGHT7_F32;
+
+// UI - GameOver
+pub const GAME_OVER_FG: (f32, f32, f32) = DB16_DARK7_F32;

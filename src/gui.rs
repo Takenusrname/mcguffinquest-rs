@@ -4,7 +4,7 @@ use specs::prelude::*;
 use rltk::Rect;
 
 use super::colors::*;
-use super::{ CombatStats, game_log::GameLog, InBackpack, Map, Name, Player, Position, RunState, State, Viewshed };
+use super::{ CombatStats, Equipped, game_log::GameLog, InBackpack, Map, Name, Player, Position, RunState, State, Viewshed };
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     let fg: RGB = return_rgb(DEFAULT_FG);
@@ -120,8 +120,118 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
 }
 
+fn inventory_frame(ctx: &mut Rltk, count: usize , x: i32, y: i32, w: i32, ctrl_fg: RGB, action: &str) {
+    let bg_rect = Rect::with_size(x, y - 2, w, (count + 3) as i32);
+    let fg: RGB;
+    let bg: RGB;
+    let menu_text: &str;
+
+    if action == "unequip" {
+        fg = return_rgb(MENU_FG);
+        bg = return_rgb(REMOVE_BG);
+        menu_text = " Remove Which Item? ";
+    } else if action == "drop" {
+        fg = return_rgb(MENU_FG);
+        bg = return_rgb(DROP_BG);
+        menu_text = " Drop Which Item? ";
+    } else if action == "use" {
+        fg = return_rgb(MENU_FG);
+        bg = return_rgb(INV_BG);
+        menu_text = " Use Which Item? ";
+    } else {
+        fg = return_rgb(DEFAULT_FG);
+        bg = return_rgb(DEFAULT_BG);
+        menu_text = "ERROR";
+    }
+
+    let start_char = rltk::to_cp437('┤');
+    let end_char = rltk::to_cp437('├');
+
+    ctx.fill_region(bg_rect, rltk::to_cp437(' '), fg, bg);
+    ctx.draw_hollow_box(x, y - 2, w, (count + 3) as i32, fg, bg);
+    ctx.print_color(x + 1, y - 2, bg, fg, menu_text);
+    ctx.print_color(x + 15, y + count as i32 + 1, ctrl_fg, bg, " ESC ");
+    ctx.print_color(x + 20, y + count as i32 + 1, fg, bg, "to cancel ");
+    ctx.set(x + 14, y + count as i32 + 1, fg, bg, start_char);
+    ctx.set(x + 30, y + count as i32 + 1, fg, bg, end_char);
+
+}
+
+fn inventory_selection(ctx: &mut Rltk, x: i32, y: i32, fg: RGB, bg: RGB, ctrl_fg: RGB, glyph: rltk::FontCharType, name: &String) {
+
+    ctx.set(x, y, fg, bg, rltk::to_cp437('('));
+    ctx.set(x + 1, y, ctrl_fg, bg, glyph);
+    ctx.set(x + 2, y, fg, bg, rltk::to_cp437(')'));
+
+    ctx.print(x + 4, y, name);
+}
+
 #[derive(PartialEq, Copy, Clone)]
 pub enum ItemMenuResult { Cancel, NoResponse, Selected }
+
+/*
+pub fn show_drop_use_inventory(gs: &mut State, ctx: &mut Rltk, action: &str) -> (ItemMenuResult, Option<Entity>) {
+    let player_entity = gs.ecs.fetch::<Entity>();
+    let names = gs.ecs.read_storage::<Name>();
+    let backpack = gs.ecs.read_storage::<InBackpack>();
+    let entities = gs.ecs.entities();
+
+    let inventory = (&backpack, &names).join().filter(|item| item.0.owner == *player_entity );
+    let count = inventory.count();
+
+    let x: i32 = 15;
+    let mut y = (25 - (count / 2)) as i32;
+    let w: i32 = 31;
+
+    let fg: RGB;
+    let bg: RGB;
+    let ctrl_fg: RGB = return_rgb(CTRL_FG);
+
+    let menu_text: &str;
+
+    if action == "drop" {
+        fg = return_rgb(MENU_FG);
+        bg = return_rgb(DROP_BG);
+    } else if action == "use" {
+        fg = return_rgb(MENU_FG);
+        bg = return_rgb(INV_BG);
+    } else {
+        fg = return_rgb(DEFAULT_FG);
+        bg = return_rgb(DEFAULT_BG);
+    }
+
+    inventory_frame(ctx, count, x, y, w, fg, bg, ctrl_fg, action);
+    
+
+    let mut equippable: Vec<Entity> = Vec::new();
+    let mut j = 0;
+    for (entity, _pack, name) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity) {
+        let glyph = 97 + j;
+        inventory_selection(ctx, x + 2, y, fg, bg, ctrl_fg, glyph, &name.name.to_string());
+
+        equippable.push(entity);
+        y += 1;
+        j += 1; 
+    }
+
+    match ctx.key {
+        None => (ItemMenuResult::NoResponse, None),
+        Some(key) => {
+            match key {
+                VirtualKeyCode::Escape => { (ItemMenuResult::Cancel, None) }
+                _ => {
+                    let selection = rltk::letter_to_option(key);
+                    if selection > -1 && selection < count as i32 {
+                        return (ItemMenuResult::Selected, Some(equippable[selection as usize]));
+                    }
+                    (ItemMenuResult::NoResponse, None)
+                }
+            }
+        }
+    }
+
+}
+*/
 
 pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
     let player_entity = gs.ecs.fetch::<Entity>();
@@ -132,33 +242,23 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
     let inventory = (&backpack, &names).join().filter(|item| item.0.owner == *player_entity );
     let count = inventory.count();
 
-    let mut y = (25 - (count / 2)) as i32;
-
-    let bg_rect = Rect::with_size(15, y - 2, 31, (count + 3) as i32);
-
     let fg: RGB = return_rgb(MENU_FG);
     let bg: RGB = return_rgb(INV_BG);
     let ctrl_fg: RGB = return_rgb(CTRL_FG);
+    
+    let x: i32 = 15;
+    let mut y = (25 - (count / 2)) as i32;
+    let w: i32 = 31;
 
-    let start_char = rltk::to_cp437('┤');
-    let end_char = rltk::to_cp437('├');
-
-    ctx.fill_region(bg_rect, rltk::to_cp437(' '), fg, bg);
-    ctx.draw_hollow_box(15, y - 2, 31, (count + 3) as i32, fg, bg);
-    ctx.print_color(16, y - 2, bg, fg, " Inventory ");
-    ctx.print_color(30, y + count as i32 + 1, ctrl_fg, bg, " ESC ");
-    ctx.print_color(35, y + count as i32 + 1, fg, bg, "to cancel ");
-    ctx.set(29, y + count as i32 + 1, fg, bg, start_char);
-    ctx.set(45, y + count as i32 + 1, fg, bg, end_char);
+    inventory_frame(ctx, count, x, y, w, ctrl_fg, "use");
 
     let mut equippable: Vec<Entity> = Vec::new();
     let mut j = 0;
+    
     for (entity, _pack, name) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity) {
-        ctx.set(17, y, fg, bg, rltk::to_cp437('('));
-        ctx.set(18, y, ctrl_fg, bg, 97 + j as rltk::FontCharType);
-        ctx.set(19, y, fg, bg, rltk::to_cp437(')'));
-
-        ctx.print(21, y, &name.name.to_string());
+        let glyph: u16 = 97 + j;
+        inventory_selection(ctx, x + 2, y, fg, bg, ctrl_fg, glyph, &name.name.to_string());
+        
         equippable.push(entity);
         y += 1;
         j += 1; 
@@ -190,34 +290,24 @@ pub fn drop_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
 
     let inventory = (&backpack, &names).join().filter(|item| item.0.owner == *player_entity );
     let count = inventory.count();
-
-    let mut y = (25 - (count / 2)) as i32;
-
-    let bg_rect = Rect::with_size(15, y - 2, 31, (count + 3) as i32);
-
+    
     let fg: RGB = return_rgb(MENU_FG);
     let bg: RGB = return_rgb(DROP_BG);
     let ctrl_fg: RGB = return_rgb(CTRL_FG);
 
-    let start_char = rltk::to_cp437('┤');
-    let end_char = rltk::to_cp437('├');
+    let x: i32 = 15;
+    let mut y = (25 - (count / 2)) as i32;
+    let w: i32 = 31;
 
-    ctx.fill_region(bg_rect, rltk::to_cp437(' '), fg, bg);
-    ctx.draw_hollow_box(15, y - 2, 31, (count + 3) as i32, fg, bg);
-    ctx.print_color(16, y - 2, bg, fg, " Drop Which Item? ");
-    ctx.print_color(30, y + count as i32 + 1, ctrl_fg, bg, " ESC ");
-    ctx.print_color(35, y + count as i32 + 1, fg, bg, "to cancel ");
-    ctx.set(29, y + count as i32 + 1, fg, bg, start_char);
-    ctx.set(45, y + count as i32 + 1, fg, bg, end_char);
+    inventory_frame(ctx, count, x, y, w, ctrl_fg, "drop");
 
     let mut equippable: Vec<Entity> = Vec::new();
     let mut j = 0;
+ 
     for (entity, _pack, name) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity) {
-        ctx.set(17, y, fg, bg, rltk::to_cp437('('));
-        ctx.set(18, y, ctrl_fg, bg, 97 + j as rltk::FontCharType);
-        ctx.set(19, y, fg, bg, rltk::to_cp437(')'));
+        let glyph: u16 = 97 + j;
+        inventory_selection(ctx, x + 2, y, fg, bg, ctrl_fg, glyph, &name.name.to_string());
 
-        ctx.print(21, y, &name.name.to_string());
         equippable.push(entity);
         y += 1;
         j += 1; 
@@ -238,6 +328,78 @@ pub fn drop_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
             }
         }
     }
+}
+
+pub fn remove_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
+    let player_entity = gs.ecs.fetch::<Entity>();
+    let names = gs.ecs.read_storage::<Name>();
+    let backpack = gs.ecs.read_storage::<Equipped>();
+    let entities = gs.ecs.entities();
+
+    let inventory = (&backpack, &names).join().filter(|item| item.0.owner == *player_entity );
+    let count = inventory.count();
+
+    let fg: RGB = return_rgb(MENU_FG);
+    let bg: RGB = return_rgb(REMOVE_BG);
+    let ctrl_fg: RGB = return_rgb(CTRL_FG);
+    
+    let x: i32 = 15;
+    let mut y = (25 - (count / 2)) as i32;
+    let w: i32 = 31;
+
+    inventory_frame(ctx, count, x, y, w, ctrl_fg, "unequip");
+
+    let mut equippable: Vec<Entity> = Vec::new();
+    let mut j = 0;
+    for (entity, _pack, name) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity) {
+        let glyph = 97 + j;
+        inventory_selection(ctx, x + 2, y, fg, bg, ctrl_fg, glyph, &name.name.to_string());
+
+        equippable.push(entity);
+        y += 1;
+        j += 1; 
+    }
+
+    match ctx.key {
+        None => (ItemMenuResult::NoResponse, None),
+        Some(key) => {
+            match key {
+                VirtualKeyCode::Escape => { (ItemMenuResult::Cancel, None) }
+                _ => {
+                    let selection = rltk::letter_to_option(key);
+                    if selection > -1 && selection < count as i32 {
+                        return (ItemMenuResult::Selected, Some(equippable[selection as usize]));
+                    }
+                    (ItemMenuResult::NoResponse, None)
+                }
+            }
+        }
+    }
+
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum GameOverResult {
+    NoSelection, QuitToMenu    
+}
+
+pub fn game_over(ctx: &mut Rltk) -> GameOverResult {
+    let y: i32 = 15;
+    let game_over_fg: RGB = return_rgb(GAME_OVER_FG);
+    let fg: RGB = return_rgb(DEFAULT_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
+    let ctrl_fg: RGB = return_rgb(CTRL_FG);
+
+    ctx.print_color_centered(y, game_over_fg, bg, "Your journey has ended!");
+    ctx.print_color_centered(y + 2, fg, bg, "You have failed your Quest to Collect the McGuffin");
+
+    ctx.print_color_centered(y + 4, ctrl_fg, bg, "Press any key to return to the menu.");
+
+    match ctx.key {
+        None => GameOverResult::NoSelection,
+        Some(_) => GameOverResult::QuitToMenu
+    }
+
 }
 
 pub fn ranged_target(gs: &mut State, ctx: &mut Rltk, range: i32) -> (ItemMenuResult, Option<Point>) {

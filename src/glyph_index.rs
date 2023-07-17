@@ -9,6 +9,12 @@ pub const ORC_GLYPH: char = 'o';
 pub const SCROLL_GLYPH: char = '‼';
 pub const POTION_GLYPH: char = '¡';
 
+// Equipment
+pub const DAGGER_GLYPH: char = '-';
+pub const SHIELD_GLYPH: char = '(';
+pub const SWORD_GLYPH: char = '/';
+pub const TOWER_S_GLYPH: char = '(';
+
 // dungeon
 pub const WALL_GLYPH: char = '#';
 pub const FLOOR_GLYPH: char = '.';

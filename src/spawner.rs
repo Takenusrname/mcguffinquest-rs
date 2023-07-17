@@ -3,8 +3,8 @@ use specs::prelude::*;
 use specs::saveload::{MarkedBuilder, SimpleMarker};
 use std::collections::HashMap;
 
-use super::{ AreaOfEffect, BlocksTile, colors::*, CombatStats, Confusion, Consumable, glyph_index::*,
-             InflictsDamage, Item, map::MAPWIDTH, Monster, Name, Player, Position, ProvidesHealing,
+use super::{ AreaOfEffect, BlocksTile, colors::*, CombatStats, Confusion, Consumable, DefenseBonus, EquipmentSlot, Equippable,
+             glyph_index::*, InflictsDamage, Item, map::MAPWIDTH, MeleePowerBonus, Monster, Name, Player, Position, ProvidesHealing,
              random_tables::RandomTable, Ranged, rect::Rect, Renderable, SerializeMe, Viewshed };
 
 /// Spawn the player and returns his/her entity object.
@@ -48,6 +48,10 @@ fn room_table(map_depth: i32) -> RandomTable {
         .add("Fireball Scroll", 2 + map_depth)
         .add("Confusion Scroll", 2 + map_depth)
         .add("Magic Missile Scroll", 4)
+        .add("Dagger", 3)
+        .add("shield", 3)
+        .add("Longsword", map_depth - 1)
+        .add("Tower Shield", map_depth - 1) 
 }
 
 pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
@@ -90,6 +94,10 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
             "Fireball Scroll" => fireball_scroll(ecs, x, y),
             "Confusion Scroll" => confusion_scroll(ecs, x, y),
             "Magic Missile Scroll" => magic_missile_scrolls(ecs, x, y),
+            "Dagger" => dagger(ecs, x, y),
+            "Shield" => shield(ecs, x, y),
+            "Longsword" => longsword(ecs, x, y),
+            "Tower Shield" => tower_shield(ecs, x, y),
             _ => {}
         }
     }
@@ -225,6 +233,95 @@ fn confusion_scroll(ecs: &mut World, x: i32, y: i32) {
         .with(Consumable{})
         .with(Ranged{range: 6})
         .with(Confusion{ turns: 4 })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn dagger(ecs: &mut World, x: i32, y: i32) {
+    let glyph: u16 = rltk::to_cp437(DAGGER_GLYPH);
+    let fg: RGB = return_rgb(DAGGER_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
+    let name: &str = "Dagger";
+    ecs.create_entity()
+        .with(Position{ x, y })
+        .with(Renderable {
+            glyph,
+            fg,
+            bg,
+            render_order: 2
+        })
+        .with(Name{ name: name.to_string() })
+        .with(Item{})
+        .with(Equippable{ slot: EquipmentSlot::Melee })
+        .with(MeleePowerBonus{ power: 2 })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn shield(ecs: &mut World, x: i32, y: i32) {
+    let glyph: u16 = rltk::to_cp437(SHIELD_GLYPH);
+    let fg: RGB = return_rgb(SHIELD_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
+    let name: &str = "Shield";
+    
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph,
+            fg,
+            bg,
+            render_order: 2
+        })
+        .with(Name { name: name.to_string() })
+        .with(Item {})
+        .with(Equippable{ slot: EquipmentSlot::Shield })
+        .with(DefenseBonus{ defense: 1})
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn longsword(ecs: &mut World, x: i32, y: i32) {
+    
+    let glyph: u16 = rltk::to_cp437(SWORD_GLYPH);
+    let fg: RGB = return_rgb(SWORD_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
+    let name: &str = "Longsword";
+
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph,
+            fg,
+            bg,
+            render_order: 2
+        })
+        .with(Name { name: name.to_string()})
+        .with(Item{})
+        .with(Equippable{ slot: EquipmentSlot::Melee })
+        .with(MeleePowerBonus{ power: 4})
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn tower_shield(ecs: &mut World, x: i32, y: i32) {
+
+    let glyph: u16 = rltk::to_cp437(TOWER_S_GLYPH);
+    let fg: RGB = return_rgb(TOWER_S_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
+    let name: &str = "Tower Shield";
+
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph,
+            fg,
+            bg,
+            render_order: 2
+        })
+        .with(Name { name: name.to_string()})
+        .with(Item{})
+        .with(Equippable{ slot: EquipmentSlot::Shield })
+        .with(DefenseBonus{ defense: 3})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
