@@ -135,7 +135,7 @@ impl GameState for State {
                 newrunstate = RunState::AwaitingInput;
             }
             RunState::ShowInventory => {
-                let result = gui::show_inventory(self, ctx);
+                let result = gui::show_drop_use_inventory(self, ctx, "use");
                 match result.0 {
                     gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
                     gui::ItemMenuResult::NoResponse => {}
@@ -154,7 +154,7 @@ impl GameState for State {
                 }
             }
             RunState::ShowDropItem => {
-                let result = gui::drop_item_menu(self, ctx);
+                let result = gui::show_drop_use_inventory(self, ctx, "drop");
                 match result.0 {
                     gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
                     gui::ItemMenuResult::NoResponse => {}

@@ -120,27 +120,17 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
 }
 
-fn inventory_frame(ctx: &mut Rltk, count: usize , x: i32, y: i32, w: i32, ctrl_fg: RGB, action: &str) {
+fn inventory_frame(ctx: &mut Rltk, count: usize , x: i32, y: i32, w: i32, fg: RGB, bg: RGB, ctrl_fg: RGB, action: &str) {
     let bg_rect = Rect::with_size(x, y - 2, w, (count + 3) as i32);
-    let fg: RGB;
-    let bg: RGB;
     let menu_text: &str;
 
     if action == "unequip" {
-        fg = return_rgb(MENU_FG);
-        bg = return_rgb(REMOVE_BG);
-        menu_text = " Remove Which Item? ";
+        menu_text = " Unequip Which Item? ";
     } else if action == "drop" {
-        fg = return_rgb(MENU_FG);
-        bg = return_rgb(DROP_BG);
         menu_text = " Drop Which Item? ";
     } else if action == "use" {
-        fg = return_rgb(MENU_FG);
-        bg = return_rgb(INV_BG);
         menu_text = " Use Which Item? ";
     } else {
-        fg = return_rgb(DEFAULT_FG);
-        bg = return_rgb(DEFAULT_BG);
         menu_text = "ERROR";
     }
 
@@ -157,19 +147,18 @@ fn inventory_frame(ctx: &mut Rltk, count: usize , x: i32, y: i32, w: i32, ctrl_f
 
 }
 
-fn inventory_selection(ctx: &mut Rltk, x: i32, y: i32, fg: RGB, bg: RGB, ctrl_fg: RGB, glyph: rltk::FontCharType, name: &String) {
+fn inventory_selection(ctx: &mut Rltk, x: i32, y: i32, fg: RGB, bg: RGB, ctrl_fg: RGB, glyph: rltk::FontCharType, selection_name: &String) {
 
     ctx.set(x, y, fg, bg, rltk::to_cp437('('));
     ctx.set(x + 1, y, ctrl_fg, bg, glyph);
     ctx.set(x + 2, y, fg, bg, rltk::to_cp437(')'));
 
-    ctx.print(x + 4, y, name);
+    ctx.print(x + 4, y, selection_name);
 }
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum ItemMenuResult { Cancel, NoResponse, Selected }
 
-/*
 pub fn show_drop_use_inventory(gs: &mut State, ctx: &mut Rltk, action: &str) -> (ItemMenuResult, Option<Entity>) {
     let player_entity = gs.ecs.fetch::<Entity>();
     let names = gs.ecs.read_storage::<Name>();
@@ -186,8 +175,6 @@ pub fn show_drop_use_inventory(gs: &mut State, ctx: &mut Rltk, action: &str) -> 
     let fg: RGB;
     let bg: RGB;
     let ctrl_fg: RGB = return_rgb(CTRL_FG);
-
-    let menu_text: &str;
 
     if action == "drop" {
         fg = return_rgb(MENU_FG);
@@ -231,104 +218,6 @@ pub fn show_drop_use_inventory(gs: &mut State, ctx: &mut Rltk, action: &str) -> 
     }
 
 }
-*/
-
-pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
-    let player_entity = gs.ecs.fetch::<Entity>();
-    let names = gs.ecs.read_storage::<Name>();
-    let backpack = gs.ecs.read_storage::<InBackpack>();
-    let entities = gs.ecs.entities();
-
-    let inventory = (&backpack, &names).join().filter(|item| item.0.owner == *player_entity );
-    let count = inventory.count();
-
-    let fg: RGB = return_rgb(MENU_FG);
-    let bg: RGB = return_rgb(INV_BG);
-    let ctrl_fg: RGB = return_rgb(CTRL_FG);
-    
-    let x: i32 = 15;
-    let mut y = (25 - (count / 2)) as i32;
-    let w: i32 = 31;
-
-    inventory_frame(ctx, count, x, y, w, ctrl_fg, "use");
-
-    let mut equippable: Vec<Entity> = Vec::new();
-    let mut j = 0;
-    
-    for (entity, _pack, name) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity) {
-        let glyph: u16 = 97 + j;
-        inventory_selection(ctx, x + 2, y, fg, bg, ctrl_fg, glyph, &name.name.to_string());
-        
-        equippable.push(entity);
-        y += 1;
-        j += 1; 
-    }
-
-    match ctx.key {
-        None => (ItemMenuResult::NoResponse, None),
-        Some(key) => {
-            match key {
-                VirtualKeyCode::Escape => { (ItemMenuResult::Cancel, None) }
-                _ => {
-                    let selection = rltk::letter_to_option(key);
-                    if selection > -1 && selection < count as i32 {
-                        return (ItemMenuResult::Selected, Some(equippable[selection as usize]));
-                    }
-                    (ItemMenuResult::NoResponse, None)
-                }
-            }
-        }
-    }
-    
-}
-
-pub fn drop_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
-    let player_entity = gs.ecs.fetch::<Entity>();
-    let names = gs.ecs.read_storage::<Name>();
-    let backpack = gs.ecs.read_storage::<InBackpack>();
-    let entities = gs.ecs.entities();
-
-    let inventory = (&backpack, &names).join().filter(|item| item.0.owner == *player_entity );
-    let count = inventory.count();
-    
-    let fg: RGB = return_rgb(MENU_FG);
-    let bg: RGB = return_rgb(DROP_BG);
-    let ctrl_fg: RGB = return_rgb(CTRL_FG);
-
-    let x: i32 = 15;
-    let mut y = (25 - (count / 2)) as i32;
-    let w: i32 = 31;
-
-    inventory_frame(ctx, count, x, y, w, ctrl_fg, "drop");
-
-    let mut equippable: Vec<Entity> = Vec::new();
-    let mut j = 0;
- 
-    for (entity, _pack, name) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity) {
-        let glyph: u16 = 97 + j;
-        inventory_selection(ctx, x + 2, y, fg, bg, ctrl_fg, glyph, &name.name.to_string());
-
-        equippable.push(entity);
-        y += 1;
-        j += 1; 
-    }
-
-    match ctx.key {
-        None => (ItemMenuResult::NoResponse, None),
-        Some(key) => {
-            match key {
-                VirtualKeyCode::Escape => { (ItemMenuResult::Cancel, None) }
-                _ => {
-                    let selection = rltk::letter_to_option(key);
-                    if selection > -1 && selection < count as i32 {
-                        return (ItemMenuResult::Selected, Some(equippable[selection as usize]));
-                    }
-                    (ItemMenuResult::NoResponse, None)
-                }
-            }
-        }
-    }
-}
 
 pub fn remove_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
     let player_entity = gs.ecs.fetch::<Entity>();
@@ -347,7 +236,7 @@ pub fn remove_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Opti
     let mut y = (25 - (count / 2)) as i32;
     let w: i32 = 31;
 
-    inventory_frame(ctx, count, x, y, w, ctrl_fg, "unequip");
+    inventory_frame(ctx, count, x, y, w, fg, bg, ctrl_fg, "unequip");
 
     let mut equippable: Vec<Entity> = Vec::new();
     let mut j = 0;
