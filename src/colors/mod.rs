@@ -29,6 +29,8 @@ pub const HEALTH_POT_FG: (f32, f32, f32) = DB16_DARK7_F32;
 pub const CONFUSION_FG: (f32, f32, f32) = DB16_LIGHT7_F32;
 pub const MMS_FG: (f32, f32, f32) = DB16_LIGHT6_F32;
 pub const FIREBALL_FG: (f32, f32, f32) = DB16_LIGHT2_F32;
+pub const RATION_FG: (f32, f32, f32) = DB16_DARK6_F32;
+pub const MAGICMAP_FG: (f32, f32, f32) = DB16_DARK2_F32;
 
 // Equipment
 pub const DAGGER_FG: (f32, f32, f32) = DB16_LIGHT6_F32;
@@ -42,6 +44,8 @@ pub const FLOOR_COLOR: (f32, f32, f32) = DB16_DARK5_F32;
 pub const STAIRS_FG: (f32, f32, f32) = DB16_LIGHT2_F32;
 pub const OUT_OF_VIEW: (f32, f32, f32) = DB16_DARK2_F32;
 pub const AETHER_FG: (f32,f32,f32) = DB16_DARK4_F32;
+pub const BLOOD_BG: (f32, f32, f32) = DB16_DARK7_F32;
+pub const BEARTRAP_FG: (f32, f32, f32) = DB16_DARK7_F32;
 
 // User Interface
 pub const HEALTH_BAR_FG: (f32, f32, f32) = DB16_DARK7_F32;
@@ -50,8 +54,14 @@ pub const TOOLTIP_BG: (f32, f32, f32) = DB16_DARK8_F32;
 pub const TARGET_BG: (f32, f32, f32) = DB16_LIGHT1_F32;
 pub const ERROR_BG: (f32,f32,f32) = DB16_DARK7_F32;
 pub const TITLE_FG: (f32,f32,f32) = DB16_LIGHT7_F32;
-pub const SELECT_FG: (f32, f32, f32) = DB16_LIGHT6_F32;
-pub const NOTSELECT_FG: (f32, f32, f32) = DB16_LIGHT8_F32;
+pub const SELECT_FG: (f32, f32, f32) = DB16_LIGHT8_F32;
+pub const NOTSELECT_FG: (f32, f32, f32) = DB16_LIGHT6_F32;
+
+// Particles
+pub const AOE_FG: (f32, f32, f32) = DB16_LIGHT2_F32;
+pub const HEAL_FG: (f32, f32, f32) = DB16_LIGHT4_F32;
+pub const POW_FG: (f32, f32, f32) = DB16_LIGHT2_F32;
+pub const DMG_FG: (f32, f32, f32) = DB16_DARK7_F32;
 
 // UI - Menu
 pub const MENU_FG: (f32, f32, f32) = DB16_LIGHT8_F32;
@@ -61,6 +71,15 @@ pub const REMOVE_BG: (f32, f32, f32) = DB16_LIGHT2_F32;
 pub const HELP_FG: (f32, f32, f32) = DB16_LIGHT3_F32;
 pub const HELP_BG: (f32, f32, f32) = DB16_LIGHT1_F32;
 pub const CTRL_FG: (f32, f32, f32) = DB16_LIGHT7_F32;
+pub const CN_FG: (f32, f32, f32) = DB16_LIGHT7_F32;
+pub const CL_FG: (f32, f32, f32) = DB16_LIGHT6_F32;
+pub const CQ_FG: (f32, f32, f32) = DB16_DARK7_F32;
+
+// UI - Hunger Clock
+pub const WELLFED: (f32, f32, f32) = DB16_LIGHT4_F32;
+pub const FED: (f32, f32, f32) = DB16_DARK6_F32;
+pub const HUNGRY: (f32, f32, f32) = DB16_LIGHT2_F32;
+pub const STARVING: (f32, f32, f32) = DB16_DARK7_F32;
 
 // UI - GameOver
 pub const GAME_OVER_FG: (f32, f32, f32) = DB16_DARK7_F32;

@@ -1,6 +1,6 @@
-use rltk::Point;
+use rltk::{Point, RGB};
 use specs::prelude::*;
-use super::{Confusion, Map, Monster, Position, RunState, Viewshed, WantsToMelee};
+use super::{colors::{return_rgb, CONFUSION_FG, DEFAULT_BG}, Confusion, glyph_index::CONFUSION_GLYPH, Map, Monster, particle_system::ParticleBuilder, Position, RunState, Viewshed, WantsToMelee};
 
 pub struct MonsterAI {}
 
@@ -15,12 +15,14 @@ impl<'a> System<'a> for MonsterAI {
                         ReadStorage<'a, Monster>,
                         WriteStorage<'a, Position>,
                         WriteStorage<'a, WantsToMelee>,
-                        WriteStorage<'a, Confusion>);
+                        WriteStorage<'a, Confusion>,
+                        WriteExpect<'a, ParticleBuilder>
+                    );
     
     fn run(&mut self, data: Self::SystemData) {
         let ( mut map, player_pos, player_entity, runstate,
               entities, mut viewshed, monster, mut position,
-              mut wants_to_melee, mut confused ) = data;
+              mut wants_to_melee, mut confused, mut particle_builder ) = data;
 
         if *runstate != RunState::MonsterTurn { return; }
 
@@ -35,6 +37,12 @@ impl<'a> System<'a> for MonsterAI {
                     confused.remove(entity);
                 }
                 can_act = false;
+
+                let fg: RGB = return_rgb(CONFUSION_FG);
+                let bg: RGB = return_rgb(DEFAULT_BG);
+                let glyph = rltk::to_cp437(CONFUSION_GLYPH);
+                particle_builder.request(pos.x, pos.y, fg, bg, glyph, 200.0)
+
             }
 
             if can_act {

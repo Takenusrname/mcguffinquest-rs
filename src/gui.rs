@@ -4,7 +4,7 @@ use specs::prelude::*;
 use rltk::Rect;
 
 use super::colors::*;
-use super::{ CombatStats, Equipped, game_log::GameLog, InBackpack, Map, Name, Player, Position, RunState, State, Viewshed };
+use super::{ CombatStats, Equipped, game_log::GameLog, Hidden, HungerClock, HungerState, InBackpack, Map, Name, Player, Position, rex_assets::RexAssets, RunState, State, Viewshed };
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     let fg: RGB = return_rgb(DEFAULT_FG);
@@ -35,8 +35,9 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     
     let combat_stats = ecs.read_storage::<CombatStats>();
     let players = ecs.read_storage::<Player>();
+    let hunger = ecs.read_storage::<HungerClock>();
 
-    for (_player, stats) in (&players, &combat_stats).join() {
+    for (_player, stats, hc) in (&players, &combat_stats, &hunger).join() {
         let health = format!("HP: {} / {} ", stats.hp, stats.max_hp);        
         
         ctx.print_color(2, 42, fg, bg, &health);
@@ -44,7 +45,14 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         let bar_fg: RGB = return_rgb(HEALTH_BAR_FG);
         let bar_bg: RGB = return_rgb(DEFAULT_BG);
 
-        ctx.draw_bar_horizontal(2, 43, 15, stats.hp, stats.max_hp, bar_fg, bar_bg)
+        ctx.draw_bar_horizontal(2, 43, 15, stats.hp, stats.max_hp, bar_fg, bar_bg);
+
+        match hc.state {
+            HungerState::WellFed => ctx.print_color(2, 44, return_rgb(WELLFED), return_rgb(DEFAULT_BG), "Well Fed"),
+            HungerState::Normal => ctx.print_color(2, 44, return_rgb(FED), return_rgb(DEFAULT_BG), "Fed"),
+            HungerState::Hungry => ctx.print_color(2, 44, return_rgb(HUNGRY), return_rgb(DEFAULT_BG), "Hungry"),
+            HungerState::Starving => ctx.print_color(2, 44, return_rgb(STARVING), return_rgb(DEFAULT_BG), "Starving"),
+        }
     }
 
     let map = ecs.fetch::<Map>();
@@ -69,11 +77,12 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     let map = ecs.fetch::<Map>();
     let names = ecs.read_storage::<Name>();
     let positions = ecs.read_storage::<Position>();
+    let hidden = ecs.read_storage::<Hidden>();
 
     let mouse_pos = ctx.mouse_pos();
     if mouse_pos.0 >= map.width || mouse_pos.1 >= map.height { return; }
     let mut tooltip: Vec<String> = Vec::new();
-    for (name, position) in (&names, &positions).join() {
+    for (name, position, _hidden) in (&names, &positions, !&hidden).join() {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             tooltip.push(name.name.to_string());
@@ -356,35 +365,51 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
     let select_fg: RGB = return_rgb(SELECT_FG);
     let notselet_fg: RGB = return_rgb(NOTSELECT_FG);
 
+    let select_cn_fg: RGB = return_rgb(CN_FG);
+    let select_cl_fg: RGB = return_rgb(CL_FG);
+    let select_cq_fg: RGB = return_rgb(CQ_FG);
+
     let sel_glyph = rltk::to_cp437('►');
 
-    let mut y = 20;
+    let assets = gs.ecs.fetch::<RexAssets>();
+    ctx.render_xp_sprite(&assets.menu, 0, 0);
+
+    let x: i32 = 5;
+    let mut y = 23;
+    let by_y: i32 = 27;
     
-    ctx.print_color(9, y, title_fg, bg, "McGuffin Quest");
+    ctx.print_color(52, by_y, title_fg, bg, "By u/usrTaken");
+    ctx.print_color(52-5, by_y + 1, notselet_fg, bg, "_______________________");
+    ctx.print_color_centered_at(60, by_y + 3, select_fg, bg,"Based upon the Rust Roguelike Tutorial" );
+    ctx.print_color_centered_at(59, by_y + 4, title_fg, bg, "By u/thebracket");
+
+    ctx.draw_box_double(x - 3, y - 2, 27, 11, title_fg, bg);
+    ctx.print_color(x - 1, y, select_fg, bg, "Use ▲/▼ arrows and Enter");
+    ctx.print_color(x - 1, y + 1, select_fg, bg, "to make selection." );
 
     if let RunState::MainMenu { menu_selection: selection } = *runstate {
-        y += 2;
+        y += 3;
         if selection == MainMenuSelection::NewGame {
-            ctx.set(9, y, select_fg, bg, sel_glyph);
-            ctx.print_color(10, y, select_fg, bg, "New Game");
+            ctx.set(x - 1, y, select_cn_fg, bg, sel_glyph);
+            ctx.print_color(x + 1, y, select_fg, bg, "New Game");
         } else {
-            ctx.print_color(10, y, notselet_fg, bg, "New Game");
+            ctx.print_color(x + 1, y, notselet_fg, bg, "New Game");
         }
         y += 2;
         if save_exists {
             if selection == MainMenuSelection::LoadGame {
-                ctx.set(9, y, select_fg, bg, sel_glyph);
-                ctx.print_color(10, y, select_fg, bg, "Load Game");
+                ctx.set(x - 1, y, select_cl_fg, bg, sel_glyph);
+                ctx.print_color(x + 1, y, select_fg, bg, "Load Game");
             } else {
-                ctx.print_color(10, y, notselet_fg, bg, "Load Game");
+                ctx.print_color(x + 1, y, notselet_fg, bg, "Load Game");
             }
             y += 2;
         }
         if selection == MainMenuSelection::Quit {
-            ctx.set(9, y, select_fg, bg, sel_glyph);
-            ctx.print_color(10, y, select_fg, bg, "Quit");
+            ctx.set(x - 1, y, select_cq_fg, bg, sel_glyph);
+            ctx.print_color(x + 1, y, select_fg, bg, "Quit");
         } else {
-            ctx.print_color(10, y, notselet_fg, bg, "Quit");
+            ctx.print_color(x + 1, y, notselet_fg, bg, "Quit");
         }
 
         match ctx.key {

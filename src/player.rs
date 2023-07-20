@@ -2,7 +2,7 @@ use rltk::{Point, Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{min, max};
 
-use super::{CombatStats, game_log::GameLog, Item, Map, Monster, Position, Player, RunState, State,
+use super::{CombatStats, EntityMoved, game_log::GameLog, HungerClock, HungerState, Item, Map, Monster, Position, Player, RunState, State,
             TileType, Viewshed, WantsToMelee, WantsToPickupItem};
 
 fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
@@ -13,6 +13,7 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let map = ecs.fetch::<Map>();
     let entities = ecs.entities();
     let mut wants_to_melee = ecs.write_storage::<WantsToMelee>();
+    let mut entity_moved = ecs.write_storage::<EntityMoved>();
 
     for (entity, _player, pos, viewshed) in (&entities, &mut players, &mut positions, &mut viewsheds).join() {
         if pos.x + delta_x < 1 || pos.x + delta_x > map.width - 1 || pos.y + delta_y < 1 || pos.y + delta_y > map.height - 1 { return ;}
@@ -29,6 +30,7 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
         if !map.blocked[dest_idx] {
             pos.x = min(79, max(0, pos.x + delta_x));
             pos.y = min(79, max(0, pos.y + delta_y));
+            entity_moved.insert(entity, EntityMoved{}).expect("Unable to insert marker");
 
             viewshed.dirty = true;
             let mut ppos = ecs.write_resource::<Point>();
@@ -92,6 +94,16 @@ fn skip_turn(ecs: &mut World) -> RunState {
                 None => {}
                 Some(_) => { can_heal = false; }
             }
+        }
+    }
+
+    let hunger_clocks = ecs.read_storage::<HungerClock>();
+    let hc = hunger_clocks.get(*player_entity);
+    if let Some(hc) = hc {
+        match hc.state {
+            HungerState::Hungry => can_heal = false,
+            HungerState::Starving => can_heal = false,
+            _ => {}
         }
     }
 

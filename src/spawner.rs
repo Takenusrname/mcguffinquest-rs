@@ -3,9 +3,9 @@ use specs::prelude::*;
 use specs::saveload::{MarkedBuilder, SimpleMarker};
 use std::collections::HashMap;
 
-use super::{ AreaOfEffect, BlocksTile, colors::*, CombatStats, Confusion, Consumable, DefenseBonus, EquipmentSlot, Equippable,
-             glyph_index::*, InflictsDamage, Item, map::MAPWIDTH, MeleePowerBonus, Monster, Name, Player, Position, ProvidesHealing,
-             random_tables::RandomTable, Ranged, rect::Rect, Renderable, SerializeMe, Viewshed };
+use super::{ AreaOfEffect, BlocksTile, colors::*, CombatStats, Confusion, Consumable, DefenseBonus, EquipmentSlot, Equippable, EntryTrigger,
+             glyph_index::*, Hidden, HungerClock, HungerState, InflictsDamage, Item, MagicMapper, map::MAPWIDTH, MeleePowerBonus, Monster, Name, Player,
+             Position, ProvidesFood, ProvidesHealing, random_tables::RandomTable, Ranged, rect::Rect, Renderable, SerializeMe, Viewshed };
 
 /// Spawn the player and returns his/her entity object.
 pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
@@ -34,6 +34,7 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
             defense: 2,
             power: 5
         })
+        .with(HungerClock{ state: HungerState::WellFed, duration: 20})
         .marked::<SimpleMarker<SerializeMe>>()
         .build()
 }
@@ -52,6 +53,9 @@ fn room_table(map_depth: i32) -> RandomTable {
         .add("shield", 3)
         .add("Longsword", map_depth - 1)
         .add("Tower Shield", map_depth - 1) 
+        .add("Rations", 10)
+        .add("Magic Mapping Scroll", 2)
+        .add("Bear Trap", 2)
 }
 
 pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
@@ -98,6 +102,9 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
             "Shield" => shield(ecs, x, y),
             "Longsword" => longsword(ecs, x, y),
             "Tower Shield" => tower_shield(ecs, x, y),
+            "Rations" => rations(ecs, x, y),
+            "Magic Mapping Scroll" => magic_mapping_scroll(ecs, x, y),
+            "Bear Trap" => bear_trap(ecs, x, y),
             _ => {}
         }
     }
@@ -322,6 +329,75 @@ fn tower_shield(ecs: &mut World, x: i32, y: i32) {
         .with(Item{})
         .with(Equippable{ slot: EquipmentSlot::Shield })
         .with(DefenseBonus{ defense: 3})
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn rations(ecs: &mut World, x: i32, y: i32) {
+
+    let glyph: u16 = rltk::to_cp437(RATIONS_GLYPH);
+    let fg: RGB = return_rgb(RATION_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
+    let name: &str = "Rations";
+
+    ecs.create_entity()
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph,
+            fg,
+            bg,
+            render_order: 2
+        })
+        .with(Name{ name: name.to_string() })
+        .with(Item{})
+        .with(ProvidesFood{})
+        .with(Consumable{})
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn magic_mapping_scroll(ecs: &mut World, x: i32, y: i32) {
+    
+    let glyph: u16 = rltk::to_cp437(SCROLL_GLYPH);
+    let fg: RGB = return_rgb(MAGICMAP_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
+    let name: &str = "Scroll of Magic Mapping";
+
+    ecs.create_entity()
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph,
+            fg,
+            bg,
+            render_order: 2
+        })
+        .with(Name{ name: name.to_string() })
+        .with(Item{})
+        .with(MagicMapper{})
+        .with(Consumable{})
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn bear_trap(ecs: &mut World, x: i32, y: i32) {
+
+    let glyph: u16 = rltk::to_cp437(BEARTRAP_GLYPH);
+    let fg: RGB = return_rgb(BEARTRAP_FG);
+    let bg: RGB = return_rgb(DEFAULT_BG);
+    let name: &str = "Bear Trap";
+
+    ecs.create_entity()
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph,
+            fg,
+            bg,
+            render_order: 2
+        })
+        .with(Name{ name: name.to_string() })
+        .with(Hidden{})
+        .with(EntryTrigger{})
+        .with(InflictsDamage{ damage: 6 })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }

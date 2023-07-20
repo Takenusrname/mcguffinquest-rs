@@ -8,6 +8,7 @@ pub const ORC_GLYPH: char = 'o';
 // Items
 pub const SCROLL_GLYPH: char = '‼';
 pub const POTION_GLYPH: char = '¡';
+pub const RATIONS_GLYPH: char = '≡';
 
 // Equipment
 pub const DAGGER_GLYPH: char = '-';
@@ -18,5 +19,12 @@ pub const TOWER_S_GLYPH: char = '(';
 // dungeon
 pub const WALL_GLYPH: char = '#';
 pub const FLOOR_GLYPH: char = '.';
-pub const STAIRS_GLYPH: char = '>';
-pub const AETHER_GLYPH: char = '≈';
+pub const STAIRS_GLYPH: char = '»';
+pub const AETHER_GLYPH: char = ' ';
+pub const BEARTRAP_GLYPH: char = '^';
+
+// Particles
+pub const POW_GLYPH: char = '☼';
+pub const HEAL_GLYPH: char = '♥';
+pub const CONFUSION_GLYPH: char = '?';
+pub const AOE_GLYPH: char = '▒';

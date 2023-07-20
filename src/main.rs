@@ -13,6 +13,7 @@ pub use components::*;
 mod game_log;
 mod glyph_index;
 mod gui;
+mod hunger_system;
 mod inventory_system;
 use inventory_system::{ ItemCollectionSystem, ItemUseSystem, ItemDropSystem, ItemRemoveSystem };
 mod map;
@@ -23,13 +24,16 @@ mod melee_combat_system;
 use melee_combat_system::MeleeCombatSystem;
 mod monster_ai_system;
 use monster_ai_system::MonsterAI;
+mod particle_system;
 mod player;
 use player::*;
 pub mod random_tables;
 mod rect;
+mod rex_assets;
 mod saveload_system;
 mod spawner;
 use spawner::{player, spawn_room};
+mod trigger_system;
 mod visibility_system;
 use visibility_system::VisibilitySystem;
 
@@ -46,7 +50,8 @@ pub enum RunState {
     SaveGame,
     NextLevel,
     ShowRemoveItem,
-    GameOver
+    GameOver,
+    MagicMapReveal { row: i32 }
  }
 
 
@@ -60,6 +65,8 @@ impl State {
         vis.run_now(&self.ecs);
         let mut mob = MonsterAI{};
         mob.run_now(&self.ecs);
+        let mut triggers = trigger_system::TriggerSystem{};
+        triggers.run_now(&self.ecs);
         let mut mapindex = MapIndexingSystem{};
         mapindex.run_now(&self.ecs);
         let mut melee = MeleeCombatSystem{};
@@ -74,6 +81,11 @@ impl State {
         drop_items.run_now(&self.ecs);
         let mut item_remove = ItemRemoveSystem{};
         item_remove.run_now(&self.ecs);
+        let mut hunger = hunger_system::HungerSystem{};
+        hunger.run_now(&self.ecs);
+        let mut particles = particle_system::ParticleSpawnSystem{};
+        particles.run_now(&self.ecs);
+        
         self.ecs.maintain();
     }
 }
@@ -89,6 +101,7 @@ impl GameState for State {
         }
 
         ctx.cls();
+        particle_system::cull_dead_particles(&mut self.ecs, ctx);
 
         match newrunstate {
             RunState::MainMenu {..} => {}
@@ -98,12 +111,13 @@ impl GameState for State {
                 {
                     let positions = self.ecs.read_storage::<Position>();
                     let renderables = self.ecs.read_storage::<Renderable>();
+                    let hidden = self.ecs.read_storage::<Hidden>();
                     let map = self.ecs.fetch::<Map>();
 
-                    let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+                    let mut data = (&positions, &renderables, !&hidden).join().collect::<Vec<_>>();
                     data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order) );
 
-                    for (pos, render) in data.iter() {
+                    for (pos, render, _hidden) in data.iter() {
                         let idx = map.xy_idx(pos.x, pos.y);
                         if map.visible_tiles[idx] { 
                             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph); }
@@ -127,7 +141,10 @@ impl GameState for State {
             RunState::PlayerTurn => {
                 self.run_systems();
                 self.ecs.maintain();
-                newrunstate = RunState::MonsterTurn;
+                match *self.ecs.fetch::<RunState>() {
+                    RunState::MagicMapReveal{ .. } => newrunstate = RunState::MagicMapReveal { row: 0 },
+                    _ => newrunstate = RunState::MonsterTurn
+                }
             }
             RunState::MonsterTurn => {
                 self.run_systems();
@@ -226,6 +243,19 @@ impl GameState for State {
                         self.game_over_cleanup();
                         newrunstate = RunState::MainMenu { menu_selection: gui::MainMenuSelection::NewGame };
                     }
+                }
+            }
+            RunState::MagicMapReveal { row } => {
+                let mut map = self.ecs.fetch_mut::<Map>();
+
+                for x in 0..MAPWIDTH {
+                    let idx = map.xy_idx(x as i32, row);
+                    map.revealed_tiles[idx] = true;
+                }
+                if row as usize == MAPHEIGHT - 1 {
+                    newrunstate = RunState::MonsterTurn;
+                } else {
+                    newrunstate = RunState::MagicMapReveal { row: row + 1 };
                 }
             }
         }
@@ -448,6 +478,14 @@ fn main() -> rltk::BError {
     gs.ecs.register::<MeleePowerBonus>();
     gs.ecs.register::<DefenseBonus>();
     gs.ecs.register::<WantsToRemoveItem>();
+    gs.ecs.register::<ParticleLifetime>();
+    gs.ecs.register::<HungerClock>();
+    gs.ecs.register::<ProvidesFood>();
+    gs.ecs.register::<MagicMapper>();
+    gs.ecs.register::<Hidden>();
+    gs.ecs.register::<EntryTrigger>();
+    gs.ecs.register::<EntityMoved>();
+    gs.ecs.register::<SingleActivation>();
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
@@ -467,7 +505,8 @@ fn main() -> rltk::BError {
     gs.ecs.insert(player_entity);
     gs.ecs.insert(RunState::MainMenu { menu_selection: gui::MainMenuSelection::NewGame });
     gs.ecs.insert(game_log::GameLog{ entries: vec!["Welcome to McGuffin Quest".to_string()]});
-
+    gs.ecs.insert(particle_system::ParticleBuilder::new());
+    gs.ecs.insert(rex_assets::RexAssets::new());
 
     rltk::main_loop(context, gs)
 }

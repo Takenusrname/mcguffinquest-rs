@@ -2,9 +2,10 @@ use rltk::{Algorithm2D, BaseMap, Point, RGB, Rltk, RandomNumberGenerator};
 use std::cmp::{max, min};
 use serde::{Serialize, Deserialize};
 use specs::prelude::*;
+use std::collections::HashSet;
 
 use super::colors::*;
-use super::glyph_index::{FLOOR_GLYPH, STAIRS_GLYPH};
+use super::glyph_index::{AETHER_GLYPH, FLOOR_GLYPH, STAIRS_GLYPH};
 use super::rect::Rect;
 
 pub const MAPWIDTH: usize = 80;
@@ -26,6 +27,7 @@ pub struct Map {
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
     pub depth: i32,
+    pub bloodstains: HashSet<usize>,
 
     #[serde(skip_serializing)]
     #[serde(skip_deserializing)]
@@ -92,12 +94,13 @@ impl Map {
             visible_tiles: vec![false; MAPCOUNT],
             blocked: vec![false; MAPCOUNT],
             tile_content: vec![Vec::new(); MAPCOUNT],
-            depth: new_depth
+            depth: new_depth,
+            bloodstains: HashSet::new()
         };
 
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
-        const MAX_SIZE: i32 = 12;
+        const MAX_SIZE: i32 = 10;
     
         let mut rng = RandomNumberGenerator::new();
     
@@ -150,7 +153,7 @@ fn is_revealed_and_wall(map: &Map, x: i32, y: i32) -> bool {
 }
 
 fn wall_glyph(map: &Map, x: i32, y: i32) -> rltk::FontCharType {
-    if x < 1 || x > map.width - 2 || y < 1 || y > map.height - 2 { return 35; }
+    if x < 1 || x > map.width - 2 || y < 1 || y > map.height - 2 as i32 { return 35; }
     let mut mask: u8 = 0;
 
     if is_revealed_and_wall(map, x, y - 1) { mask += 1; }
@@ -235,6 +238,7 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
         if map.revealed_tiles[idx] {
             let glyph;
             let mut fg: RGB;
+            let mut bg: RGB = return_rgb(DEFAULT_BG);
             // Render a tile depending upon the tile type
             match tile {
                 TileType::Floor => {
@@ -250,9 +254,19 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                     fg = return_rgb(STAIRS_FG);
                 }
             }
-            if !map.visible_tiles[idx] { fg = return_rgb(OUT_OF_VIEW);}
-            ctx.set(x, y, fg, return_rgb(DEFAULT_BG), glyph);
-        } 
+            if map.bloodstains.contains(&idx) { bg = return_rgb(BLOOD_BG);}
+            if !map.visible_tiles[idx] { 
+                fg = return_rgb(OUT_OF_VIEW);
+                bg = return_rgb(DEFAULT_BG);
+            } 
+            ctx.set(x, y, fg, bg, glyph);
+        } else {
+            let glyph;
+            let fg = return_rgb(AETHER_FG);
+            let bg = return_rgb(DEFAULT_BG);
+            glyph = rltk::to_cp437(AETHER_GLYPH);
+            ctx.set(x, y, fg, bg, glyph);
+        }
         
         // Move the coordinates
         x += 1;

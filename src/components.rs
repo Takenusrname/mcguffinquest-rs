@@ -159,6 +159,43 @@ pub struct DefenseBonus {
     pub defense: i32
 }
 
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct ParticleLifetime {
+    pub lifetime_ms: f32
+}
+
+#[derive(Serialize, Deserialize, Copy, Clone, PartialEq)]
+pub enum HungerState {
+    WellFed,
+    Normal,
+    Hungry,
+    Starving
+}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct HungerClock {
+    pub state: HungerState,
+    pub duration: i32
+}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct ProvidesFood {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct MagicMapper{}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct Hidden {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct EntryTrigger {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct EntityMoved {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct SingleActivation {}
+
 // Serialization helper code. We need to implement ConvertSaveload for each type that
 // contains an Entity.
 
