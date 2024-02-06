@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use super::{ AreaOfEffect, BlocksTile, colors::*, CombatStats, Confusion, Consumable, DefenseBonus, EquipmentSlot, Equippable, EntryTrigger,
              glyph_index::*, Hidden, HungerClock, HungerState, InflictsDamage, Item, MagicMapper, map::MAPWIDTH, MeleePowerBonus, Monster, Name, Player,
-             Position, ProvidesFood, ProvidesHealing, random_tables::RandomTable, Ranged, rect::Rect, Renderable, SerializeMe, Viewshed };
+             Position, ProvidesFood, ProvidesHealing, random_tables::RandomTable, Ranged, rect::Rect, Renderable, SerializeMe, SingleActivation, Viewshed };
 
 /// Spawn the player and returns his/her entity object.
 pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
@@ -398,6 +398,7 @@ fn bear_trap(ecs: &mut World, x: i32, y: i32) {
         .with(Hidden{})
         .with(EntryTrigger{})
         .with(InflictsDamage{ damage: 6 })
+        .with(SingleActivation {})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
