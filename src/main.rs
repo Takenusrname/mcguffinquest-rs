@@ -18,6 +18,7 @@ mod inventory_system;
 use inventory_system::{ ItemCollectionSystem, ItemUseSystem, ItemDropSystem, ItemRemoveSystem };
 mod map;
 pub use map::*;
+pub mod map_builders;
 mod map_indexing_system;
 use map_indexing_system::MapIndexingSystem;
 mod melee_combat_system;
@@ -32,7 +33,6 @@ mod rect;
 mod rex_assets;
 mod saveload_system;
 mod spawner;
-use spawner::{player, spawn_room};
 mod trigger_system;
 mod visibility_system;
 use visibility_system::VisibilitySystem;
@@ -105,6 +105,7 @@ impl GameState for State {
 
         match newrunstate {
             RunState::MainMenu {..} => {}
+            RunState::GameOver {..} => {}
             _ => {
                 draw_map(&self.ecs, ctx);
 
@@ -128,16 +129,18 @@ impl GameState for State {
             }
         }
  
-
         match newrunstate {
+
             RunState::PreRun => {
                 self.run_systems();
                 self.ecs.maintain();
                 newrunstate = RunState::AwaitingInput;
             }
+            
             RunState::AwaitingInput => {
                 newrunstate = player_input(self, ctx);
             }
+            
             RunState::PlayerTurn => {
                 self.run_systems();
                 self.ecs.maintain();
@@ -146,11 +149,13 @@ impl GameState for State {
                     _ => newrunstate = RunState::MonsterTurn
                 }
             }
+            
             RunState::MonsterTurn => {
                 self.run_systems();
                 self.ecs.maintain();
                 newrunstate = RunState::AwaitingInput;
             }
+            
             RunState::ShowInventory => {
                 let result = gui::show_drop_use_inventory(self, ctx, "use");
                 match result.0 {
@@ -170,6 +175,7 @@ impl GameState for State {
                     }
                 }
             }
+            
             RunState::ShowDropItem => {
                 let result = gui::show_drop_use_inventory(self, ctx, "drop");
                 match result.0 {
@@ -183,6 +189,7 @@ impl GameState for State {
                     }
                 }
             }
+            
             RunState::ShowTargeting { range, item } => {
                 let result = gui::ranged_target(self, ctx, range);
                 match result.0 {
@@ -195,6 +202,7 @@ impl GameState for State {
                     }
                 }
             }
+            
             RunState::MainMenu { .. } => {
                 let result = gui::main_menu(self, ctx);
                 match result {
@@ -212,16 +220,30 @@ impl GameState for State {
                     }
                 }
             }
+
+            RunState::GameOver => {
+                let result = gui::game_over(ctx);
+                match result {
+                    gui::GameOverResult::NoSelection => {}
+                    gui::GameOverResult::QuitToMenu => {
+                        self.game_over_cleanup();
+                        newrunstate = RunState::MainMenu { menu_selection: gui::MainMenuSelection::NewGame };
+                    }
+                }
+            }
+
             RunState::SaveGame => {
                 
                 saveload_system::save_game(&mut self.ecs);
 
                 newrunstate = RunState::MainMenu { menu_selection: gui::MainMenuSelection::LoadGame };
             }
+            
             RunState::NextLevel => {
                 self.goto_next_level();
                 newrunstate = RunState::PreRun;
             }
+            
             RunState::ShowRemoveItem => {
                 let result = gui::remove_item_menu(self, ctx);
                 match result.0 {
@@ -235,16 +257,7 @@ impl GameState for State {
                     }
                 }
             }
-            RunState::GameOver => {
-                let result = gui::game_over(ctx);
-                match result {
-                    gui::GameOverResult::NoSelection => {}
-                    gui::GameOverResult::QuitToMenu => {
-                        self.game_over_cleanup();
-                        newrunstate = RunState::MainMenu { menu_selection: gui::MainMenuSelection::NewGame };
-                    }
-                }
-            }
+            
             RunState::MagicMapReveal { row } => {
                 let mut map = self.ecs.fetch_mut::<Map>();
 
@@ -319,22 +332,23 @@ impl State {
         }
 
         // Build a new map and place the player
-        let worldmap;
+        let mut builder;
         let current_depth;
+        let player_start;
         {
             let mut worldmap_resource = self.ecs.write_resource::<Map>();
             current_depth = worldmap_resource.depth;
-            *worldmap_resource = Map::new_map_rooms_and_corridors(current_depth + 1);
-            worldmap = worldmap_resource.clone();
+            builder = map_builders::random_builder(current_depth + 1);
+            builder.build_map();
+            *worldmap_resource = builder.get_map();
+            player_start = builder.get_starting_position();
         }
 
         // spawn bad guys
-        for room in worldmap.rooms.iter().skip(1) {
-            spawner::spawn_room(&mut self.ecs, room, current_depth + 1);
-        }
+        builder.spawn_entities(&mut self.ecs);
 
         // Place the player and update resources
-        let (player_x, player_y) = worldmap.rooms[0].center();
+        let (player_x, player_y) = (player_start.x, player_start.y);
         let mut player_position = self.ecs.write_resource::<Point>();
         *player_position = Point::new(player_x, player_y);
         let mut position_components = self.ecs.write_storage::<Position>();
@@ -373,20 +387,21 @@ impl State {
         }
 
         // Build a new map and place the player
-        let worldmap;
+        let mut builder;
+        let player_start;
         {
             let mut worldmap_resource = self.ecs.write_resource::<Map>();
-            *worldmap_resource = Map::new_map_rooms_and_corridors(1);
-            worldmap = worldmap_resource.clone();
+            builder = map_builders::random_builder(1);
+            builder.build_map();
+            *worldmap_resource = builder.get_map();
+            player_start = builder.get_starting_position();
         }
 
         // spawn bad guys
-        for room in worldmap.rooms.iter().skip(1) {
-            spawner::spawn_room(&mut self.ecs, room, 1);
-        }
+        builder.spawn_entities(&mut self.ecs);
 
         // Place the player and update resources
-        let (player_x, player_y) = worldmap.rooms[0].center();
+        let (player_x, player_y) = (player_start.x, player_start.y);
         let player_entity = spawner::player(&mut self.ecs, player_x, player_y);
         let mut player_position = self.ecs.write_resource::<Point>();
         *player_position = Point::new(player_x, player_y);
@@ -437,14 +452,14 @@ fn main() -> rltk::BError {
         .build()?;
 
     // Set Active font to cp437_16x16_mod.png
-    context.set_active_font(1, true);
+    context.set_active_font(1, false);
 
     // Screenburn color and scanlines
     context.screen_burn_color(RGB::named(SCREENBURN_COLOR));
     context.with_post_scanlines(true);
 
     // hides system mouse cursor
-    context.with_mouse_visibility(false);
+    context.with_mouse_visibility(true);
 
     let mut gs = State {
         ecs: World::new()
@@ -489,16 +504,16 @@ fn main() -> rltk::BError {
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
-    let map: Map = Map::new_map_rooms_and_corridors(1);
-    let(player_x, player_y) = map.rooms[0].center();
+    let mut builder = map_builders::random_builder(1);
+    builder.build_map();
+    let player_start = builder.get_starting_position();
+    let map = builder.get_map();
+    let(player_x, player_y) = (player_start.x, player_start.y);
 
-    let player_entity = player(&mut gs.ecs, player_x, player_y);
+    let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
-
-    for room in map.rooms.iter().skip(1) {
-        spawn_room(&mut gs.ecs, room, 1);
-    }
+    builder.spawn_entities(&mut gs.ecs);
 
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
