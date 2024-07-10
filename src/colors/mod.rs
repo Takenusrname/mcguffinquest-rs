@@ -1,5 +1,6 @@
 mod db16;
 use db16::*;
+mod db32;
 use rltk::RGB;
 
 pub fn return_rgb(color_values: (f32,f32,f32)) -> RGB {

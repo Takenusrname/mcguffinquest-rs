@@ -455,6 +455,7 @@ const FONT_TILE_SIZE: i32 = 16;
 // FPS cap
 const FPS_CAP: f32 = 30.0;
 
+// MARK: MAIN LOOP
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
 
@@ -475,8 +476,10 @@ fn main() -> rltk::BError {
     context.set_active_font(1, false);
 
     // Screenburn color and scanlines
-    context.screen_burn_color(RGB::named(SCREENBURN_COLOR));
-    context.with_post_scanlines(true);
+    let screenburn: bool = false;
+    let screenburn_color: RGB = RGB::named(SCREENBURN_COLOR);
+    context.screen_burn_color(screenburn_color);
+    context.with_post_scanlines(screenburn);
 
     // hides system mouse cursor
     context.with_mouse_visibility(true);

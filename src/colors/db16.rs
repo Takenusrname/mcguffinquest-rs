@@ -18,7 +18,7 @@ pub const DB16_LIGHT7: (u8, u8, u8) = (218, 212, 94); // light yellow
 pub const DB16_LIGHT8: (u8, u8, u8) = (222, 238, 214);// white
 
 
-pub const DB16_DARK1_F32: (f32, f32, f32) = (0.08, 0.05, 0.1); // Black final number should be 0.11 instead of 0.1
+pub const DB16_DARK1_F32: (f32, f32, f32) = (0.08, 0.05, 0.11); // Black final number should be 0.11 instead of 0.1
 pub const DB16_DARK2_F32: (f32, f32, f32) = (0.27, 0.14, 0.2); // violet or mauve
 pub const DB16_DARK3_F32: (f32, f32, f32) = (0.19, 0.2, 0.43); // dark blue
 pub const DB16_DARK4_F32: (f32, f32, f32) = (0.31, 0.29, 0.31); // dark grey
