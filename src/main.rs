@@ -476,13 +476,13 @@ fn main() -> rltk::BError {
     context.set_active_font(1, false);
 
     // Screenburn color and scanlines
-    let screenburn: bool = false;
+    let screenburn: bool = true;
     let screenburn_color: RGB = RGB::named(SCREENBURN_COLOR);
     context.screen_burn_color(screenburn_color);
     context.with_post_scanlines(screenburn);
 
     // hides system mouse cursor
-    context.with_mouse_visibility(true);
+    context.with_mouse_visibility(false);
 
     let mut gs = State {
         ecs: World::new(),

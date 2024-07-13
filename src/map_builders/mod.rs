@@ -22,6 +22,9 @@ pub trait MapBuilder {
 
 pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
     
+    // For testing Purposes 
+    //Box::new(SimpleMapBuilder::new(new_depth))
+    
     let mut rng = rltk::RandomNumberGenerator::new();
     let builder = rng.roll_dice(1, 3);
     match builder {

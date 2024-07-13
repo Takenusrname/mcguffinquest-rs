@@ -70,7 +70,7 @@ impl Map {
 }
 
 pub fn is_inbounds(map: &Map, x: i32, y: i32) -> bool {
-    if x < 0 || x > map.width - 1 || y < 0 || y > map.height - 1 { return false; } else { return true;}
+    if x < 0 || x > map.width - 1 || y < 0 || y > map.height - 1 { return false; } else { return true; }
 }
 
 fn is_revealed_and_wall(map: &Map, x: i32, y: i32) -> bool {
@@ -79,14 +79,27 @@ fn is_revealed_and_wall(map: &Map, x: i32, y: i32) -> bool {
 }
 
 fn wall_glyph(map: &Map, x: i32, y: i32) -> rltk::FontCharType {
-    if x < 1 || x > map.width - 2 || y < 1 || y > map.height - 2 as i32 { return 35; }
+    // if x < 1 || x > map.width - 2 || y < 1 || y > map.height - 2 as i32 { return 35; }
+
     let mut mask: u8 = 0;
 
-    if is_revealed_and_wall(map, x, y - 1) { mask += 1; }
-    if is_revealed_and_wall(map, x, y + 1) { mask += 2; }
-    if is_revealed_and_wall(map, x - 1, y) { mask += 4; }
-    if is_revealed_and_wall(map, x + 1, y) { mask += 8; }
-    
+    // Check North
+    if is_inbounds(map, x, y - 1) && is_revealed_and_wall(map, x, y - 1) { 
+        mask += 1; 
+    }
+    // Check South
+    if is_inbounds(map, x, y + 1) && is_revealed_and_wall(map, x, y + 1) {
+        mask += 2; 
+    }
+    // Check West
+    if is_inbounds(map, x - 1, y) && is_revealed_and_wall(map, x - 1, y) {
+        mask += 4; 
+    }
+    // Check East
+    if is_inbounds(map, x + 1, y) && is_revealed_and_wall(map, x + 1, y) {
+        mask += 8;
+    }
+
     match mask {
         0 => { 9 } // ○ pillar
         1 => { 208 } // ╨ wall only to north

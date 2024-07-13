@@ -15,7 +15,7 @@ pub const DEFAULT_BG: (f32, f32, f32) = DB16_DARK1_F32;
 
 // Screen burn
 // dark5, dark7, light1, light2, light4, light6 preferred
-pub const SCREENBURN_COLOR: (u8, u8, u8) = DB16_LIGHT6;
+pub const SCREENBURN_COLOR: (u8, u8, u8) = DB16_LIGHT1;
 
 // Player
 pub const PLAYER_FG: (f32, f32, f32) = DB16_LIGHT8_F32;
