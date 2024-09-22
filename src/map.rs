@@ -83,18 +83,11 @@ fn wall_glyph(map: &Map, x: i32, y: i32) -> rltk::FontCharType {
 
     /*
     4-bit mask values
-    1, 2 , 4, 8
+    1, 2, 4, 8
     
       1 
     4 0 8
       2
-
-    8-bit mask values
-    1, 2, 4, 8, 16, 32, 64, 128
-    
-     16 1 32
-      4 0  8
-    128 2 64
     */
 
     let mut mask: u8 = 0;

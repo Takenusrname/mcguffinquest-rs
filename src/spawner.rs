@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use super::{ AreaOfEffect, BlocksTile, colors::*, CombatStats, Confusion, Consumable, DefenseBonus, EquipmentSlot, Equippable, EntryTrigger,
              glyph_index::*, Hidden, HungerClock, HungerState, InflictsDamage, Item, MagicMapper, map::MAPWIDTH, MeleePowerBonus, Monster, Name, Player,
-             Position, ProvidesFood, ProvidesHealing, random_tables::RandomTable, Ranged, rect::Rect, Renderable, SerializeMe, SingleActivation, Viewshed };
+             Position, ProvidesFood, ProvidesHealing, random_tables::RandomTable, Ranged, rect::Rect, Renderable, SerializeMe, SingleActivation, Viewshed, Map, TileType };
 
 /// Spawn the player and returns his/her entity object.
 pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
@@ -59,54 +59,65 @@ fn room_table(map_depth: i32) -> RandomTable {
 }
 
 pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
+    let mut possible_targets: Vec<usize> = Vec::new();
+    {
+        let map = ecs.fetch::<Map>();
+        for y in room.y1 + 1 .. room.y2 {
+            for x in room.x1 + 1 .. room.x2 {
+                let idx = map.xy_idx(x, y);
+                if map.tiles[idx] == TileType::Floor {
+                    possible_targets.push(idx);
+                }
+            }
+        }
+    }
+    spawn_region(ecs, &possible_targets, map_depth);
+}
+
+pub fn spawn_region(ecs: &mut World, area: &[usize], map_depth: i32) {
     let spawn_table = room_table(map_depth);
     let mut spawn_points: HashMap<usize, String> = HashMap::new();
+    let mut areas: Vec<usize> = Vec::from(area);
 
     // Scope to keep borrow checker happy
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        let num_spawns = rng.roll_dice(1, MAX_MONSTERS + 3) +(map_depth - 1) - 3;
+        let num_spawns = i32::min(areas.len() as i32, rng.roll_dice(1, MAX_MONSTERS + 3) + (map_depth - 1) - 3);
+        if num_spawns == 0 { return; }
 
         for _i in 0..num_spawns {
-            let mut added = false;
-            let mut tries = 0;
-
-            while !added && tries < 20 {
-                let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
-                let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
-
-                let idx = (y * MAPWIDTH) + x;
-                if !spawn_points.contains_key(&idx) {
-                    spawn_points.insert(idx, spawn_table.roll(&mut rng));
-                    added = true;
-                } else {
-                    tries += 1;
-                }
-            }
+            let array_index = if areas.len() == 1 { 0usize } else { (rng.roll_dice(1, areas.len() as i32) - 1) as usize };
+            let map_idx = areas[array_index];
+            spawn_points.insert(map_idx, spawn_table.roll(&mut rng));
+            areas.remove(array_index);
         }
     }
 
     // Actually spawn the monster
     for spawn in spawn_points.iter() {
-        let x = (*spawn.0 % MAPWIDTH) as i32;
-        let y = (*spawn.0 / MAPWIDTH) as i32;
+        spawn_entity(ecs, &spawn);        
+    }
+}
 
-        match spawn.1.as_ref() {
-            "Goblin" => goblin(ecs, x, y),
-            "Orc" => orc(ecs, x, y),
-            "Health Potion" => health_potion(ecs, x, y),
-            "Fireball Scroll" => fireball_scroll(ecs, x, y),
-            "Confusion Scroll" => confusion_scroll(ecs, x, y),
-            "Magic Missile Scroll" => magic_missile_scrolls(ecs, x, y),
-            "Dagger" => dagger(ecs, x, y),
-            "Shield" => shield(ecs, x, y),
-            "Longsword" => longsword(ecs, x, y),
-            "Tower Shield" => tower_shield(ecs, x, y),
-            "Rations" => rations(ecs, x, y),
-            "Magic Mapping Scroll" => magic_mapping_scroll(ecs, x, y),
-            "Bear Trap" => bear_trap(ecs, x, y),
-            _ => {}
-        }
+fn spawn_entity(ecs: &mut World, spawn: &(&usize, &String)) {
+    let x = (*spawn.0 % MAPWIDTH) as i32;
+    let y = (*spawn.0 / MAPWIDTH) as i32;
+
+    match spawn.1.as_ref() {
+        "Goblin" => goblin(ecs, x, y),
+        "Orc" => orc(ecs, x, y),
+        "Health Potion" => health_potion(ecs, x, y),
+        "Fireball Scroll" => fireball_scroll(ecs, x, y),
+        "Confusion Scroll" => confusion_scroll(ecs, x, y),
+        "Magic Missile Scroll" => magic_missile_scrolls(ecs, x, y),
+        "Dagger" => dagger(ecs, x, y),
+        "Shield" => shield(ecs, x, y),
+        "Longsword" => longsword(ecs, x, y),
+        "Tower Shield" => tower_shield(ecs, x, y),
+        "Rations" => rations(ecs, x, y),
+        "Magic Mapping Scroll" => magic_mapping_scroll(ecs, x, y),
+        "Bear Trap" => bear_trap(ecs, x, y),
+        _ => {}
     }
 }
 
